@@ -21,7 +21,7 @@ const Home = () => {
     <div style={{ minHeight: '100vh', display: 'flex', flexDirection: 'column' }}>
       
       {/* Landing Page Navbar */}
-      <header style={{
+      <header className="landing-header" style={{
         position: 'sticky',
         top: 0,
         zIndex: 100,
@@ -52,7 +52,7 @@ const Home = () => {
                 boxShadow: '0 4px 15px var(--primary-glow)'
               }} 
             />
-            <span style={{
+            <span className="landing-logo-text" style={{
               fontFamily: 'var(--font-display)',
               fontSize: '1.3rem',
               fontWeight: 800,
@@ -74,10 +74,28 @@ const Home = () => {
             @media (min-width: 768px) {
               #landing-nav { display: flex !important; }
             }
+            .landing-actions a {
+              white-space: nowrap;
+            }
+            @media (max-width: 480px) {
+              .landing-header {
+                padding: 0.75rem 1rem !important;
+              }
+              .landing-logo-text {
+                font-size: 1.1rem !important;
+              }
+              .landing-actions {
+                gap: 0.4rem !important;
+              }
+              .landing-actions a {
+                padding: 0.45rem 0.85rem !important;
+                font-size: 0.75rem !important;
+              }
+            }
           `}</style>
 
           {/* Right Action buttons */}
-          <div className="flex align-center gap-1">
+          <div className="flex align-center gap-1 landing-actions">
             {user ? (
               <Link to="/dashboard" className="btn btn-primary" style={{ padding: '0.6rem 1.25rem', fontSize: '0.85rem' }}>
                 <span>Dashboard</span>
