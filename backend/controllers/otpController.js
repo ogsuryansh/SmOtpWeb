@@ -1,0 +1,373 @@
+import OTPOrder from '../models/OTPOrder.js';
+import User from '../models/User.js';
+import Setting from '../models/Setting.js';
+import Transaction from '../models/Transaction.js';
+import AuditLog from '../models/AuditLog.js';
+import { sastaOtpService } from '../services/sastaOtpService.js';
+
+// Helper to get system markup
+async function getMarkupPercentage() {
+  const setting = await Setting.findOne({ key: 'markupPercentage' });
+  return setting ? parseFloat(setting.value) : 20; // Default 20%
+}
+
+// @desc    Get services list with local markup applied
+// @route   GET /api/otp/services
+// @access  Private
+export const getServices = async (req, res, next) => {
+  try {
+    const { service } = req.query;
+    const markup = await getMarkupPercentage();
+    
+    const apiData = await sastaOtpService.getServicesList(service);
+
+    if (apiData.status !== 'OK') {
+      res.status(500);
+      throw new Error(apiData.message || 'Failed to fetch services from provider');
+    }
+
+    // Apply markup to services
+    const services = { ...apiData.services };
+    for (const key in services) {
+      const srv = services[key];
+      // Apply to main price
+      srv.price = parseFloat((srv.price * (1 + markup / 100)).toFixed(2));
+      
+      // Apply to individual country prices
+      if (srv.countries && Array.isArray(srv.countries)) {
+        srv.countries = srv.countries.map(country => ({
+          ...country,
+          price: parseFloat((country.price * (1 + markup / 100)).toFixed(2))
+        }));
+      }
+    }
+
+    return res.status(200).json({
+      success: true,
+      services,
+      isMock: apiData.isMock || false,
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
+// @desc    Get supported countries
+// @route   GET /api/otp/countries
+// @access  Private
+export const getCountries = async (req, res, next) => {
+  try {
+    const countriesData = await sastaOtpService.getCountries();
+    return res.status(200).json({
+      success: true,
+      ...countriesData,
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
+// @desc    Buy a phone number
+// @route   POST /api/otp/buy
+// @access  Private
+export const buyNumber = async (req, res, next) => {
+  try {
+    const { serviceCode, countryCode, multiSms } = req.body;
+
+    if (!serviceCode) {
+      res.status(400);
+      throw new Error('Please select a service');
+    }
+
+    const cCode = countryCode || '91';
+
+    // 1. Fetch original service price
+    const apiData = await sastaOtpService.getServicesList(serviceCode);
+    if (apiData.status !== 'OK' || !apiData.services[serviceCode]) {
+      res.status(400);
+      throw new Error('Selected service is currently unavailable');
+    }
+
+    const serviceInfo = apiData.services[serviceCode];
+    const countryConfig = serviceInfo.countries.find(c => c.country_code === cCode);
+    
+    if (!countryConfig) {
+      res.status(400);
+      throw new Error('Service is not available in the selected country');
+    }
+
+    if (countryConfig.qty <= 0) {
+      res.status(400);
+      throw new Error('No virtual numbers left in stock for this country');
+    }
+
+    const apiPrice = countryConfig.price;
+    const markup = await getMarkupPercentage();
+    const finalPrice = parseFloat((apiPrice * (1 + markup / 100)).toFixed(2));
+
+    // 2. Atomic Balance Check & Reservation
+    // We deduct the balance immediately to prevent double spending.
+    // If the API call fails, we restore/refund the reserved balance.
+    const user = await User.findOneAndUpdate(
+      { _id: req.user.id, balance: { $gte: finalPrice } },
+      { $inc: { balance: -finalPrice } },
+      { new: true }
+    );
+
+    if (!user) {
+      res.status(400);
+      throw new Error('Insufficient wallet balance. Please deposit funds.');
+    }
+
+    // 3. Request number from SastaOTP
+    let apiResponse;
+    try {
+      apiResponse = await sastaOtpService.getNumber(serviceCode, cCode, null, !!multiSms);
+    } catch (apiError) {
+      // Rollback user balance
+      await User.findByIdAndUpdate(req.user.id, { $inc: { balance: finalPrice } });
+      
+      res.status(400);
+      throw new Error(`API Error: ${apiError.message}`);
+    }
+
+    // 4. Create Order & Log transaction
+    const expiresSec = apiResponse.expires_in || 1200;
+    const expiresAt = new Date(Date.now() + expiresSec * 1000);
+
+    const order = await OTPOrder.create({
+      userId: req.user.id,
+      activationId: apiResponse.activation_id,
+      phoneNumber: apiResponse.number,
+      service: apiResponse.service,
+      serviceCode: serviceCode,
+      country: apiResponse.country,
+      countryCode: cCode,
+      price: finalPrice,
+      apiPrice: apiPrice,
+      status: 'pending',
+      multiSms: apiResponse.multi_sms || false,
+      expiresAt: expiresAt,
+    });
+
+    const transaction = await Transaction.create({
+      userId: req.user.id,
+      amount: -finalPrice,
+      type: 'purchase',
+      description: `Purchase number ${apiResponse.number} for ${apiResponse.service}`,
+      referenceId: order._id,
+    });
+
+    await AuditLog.create({
+      action: 'OTP_BUY_SUCCESS',
+      details: { orderId: order._id, activationId: order.activationId, price: finalPrice },
+      userId: req.user.id,
+    });
+
+    return res.status(201).json({
+      success: true,
+      message: 'Number purchased successfully',
+      order,
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
+// @desc    Poll/Get individual OTP order status
+// @route   GET /api/otp/order/:id
+// @access  Private
+export const pollOrder = async (req, res, next) => {
+  try {
+    const order = await OTPOrder.findOne({ _id: req.params.id, userId: req.user.id });
+
+    if (!order) {
+      res.status(404);
+      throw new Error('Order not found');
+    }
+
+    if (order.status !== 'pending') {
+      return res.status(200).json({ success: true, order });
+    }
+
+    // Check if local expiration is reached
+    if (new Date() > order.expiresAt) {
+      // Update local state to expired
+      order.status = 'expired';
+      await order.save();
+
+      // Attempt to tell provider
+      try {
+        await sastaOtpService.setStatus(order.activationId, -1);
+      } catch (err) {
+        console.warn('Could not cancel on provider side:', err.message);
+      }
+
+      // Refund user
+      await User.findByIdAndUpdate(order.userId, { $inc: { balance: order.price } });
+      await Transaction.create({
+        userId: order.userId,
+        amount: order.price,
+        type: 'refund',
+        description: `Refund for expired number ${order.phoneNumber} (${order.service})`,
+        referenceId: order._id,
+      });
+
+      await AuditLog.create({
+        action: 'OTP_ORDER_EXPIRED',
+        details: { orderId: order._id, refundAmount: order.price },
+        userId: order.userId,
+      });
+
+      return res.status(200).json({ success: true, order });
+    }
+
+    // Call SastaOTP getStatus
+    const statusData = await sastaOtpService.getStatus(order.activationId);
+
+    if (statusData.sms && statusData.sms.code) {
+      // OTP Received!
+      order.status = 'completed';
+      order.smsCode = statusData.sms.code;
+      order.smsText = statusData.sms.text;
+      await order.save();
+
+      // Inform provider that SMS was received
+      try {
+        await sastaOtpService.setStatus(order.activationId, 6);
+      } catch (err) {
+        console.warn('Failed setting status=6 on provider:', err.message);
+      }
+
+      await AuditLog.create({
+        action: 'OTP_RECEIVED',
+        details: { orderId: order._id, code: order.smsCode },
+        userId: order.userId,
+      });
+    } else if (statusData.status === 'STATUS_CANCEL') {
+      // Cancelled by provider or user
+      order.status = 'cancelled';
+      await order.save();
+
+      // Refund user
+      await User.findByIdAndUpdate(order.userId, { $inc: { balance: order.price } });
+      await Transaction.create({
+        userId: order.userId,
+        amount: order.price,
+        type: 'refund',
+        description: `Refund for cancelled activation ${order.phoneNumber}`,
+        referenceId: order._id,
+      });
+
+      await AuditLog.create({
+        action: 'OTP_ORDER_CANCELLED_PROVIDER',
+        details: { orderId: order._id, refundAmount: order.price },
+        userId: order.userId,
+      });
+    }
+
+    return res.status(200).json({
+      success: true,
+      order,
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
+// @desc    Manually cancel or finish an order
+// @route   POST /api/otp/status
+// @access  Private
+export const updateOrderStatus = async (req, res, next) => {
+  try {
+    const { orderId, action } = req.body; // action: 'cancel' or 'complete'
+
+    if (!orderId || !action) {
+      res.status(400);
+      throw new Error('Please provide orderId and action');
+    }
+
+    const order = await OTPOrder.findOne({ _id: orderId, userId: req.user.id });
+
+    if (!order) {
+      res.status(404);
+      throw new Error('Order not found');
+    }
+
+    if (action === 'cancel') {
+      if (order.status !== 'pending') {
+        res.status(400);
+        throw new Error(`Cannot cancel order. Current status: ${order.status}`);
+      }
+
+      // Tell SastaOTP to cancel (status = -1)
+      const resText = await sastaOtpService.setStatus(order.activationId, -1);
+
+      if (resText === 'ACCESS_CANCEL' || resText.includes('CANCEL')) {
+        order.status = 'cancelled';
+        await order.save();
+
+        // Refund user
+        await User.findByIdAndUpdate(order.userId, { $inc: { balance: order.price } });
+        await Transaction.create({
+          userId: order.userId,
+          amount: order.price,
+          type: 'refund',
+          description: `Refund for cancelled activation ${order.phoneNumber}`,
+          referenceId: order._id,
+        });
+
+        await AuditLog.create({
+          action: 'OTP_ORDER_CANCELLED_USER',
+          details: { orderId: order._id, refundAmount: order.price },
+          userId: order.userId,
+        });
+
+        return res.status(200).json({
+          success: true,
+          message: 'Order cancelled and funds refunded successfully',
+          order,
+        });
+      } else {
+        res.status(400);
+        throw new Error(`Provider denied cancellation: ${resText}`);
+      }
+    } else if (action === 'complete') {
+      if (order.status !== 'completed' && !order.smsCode) {
+        res.status(400);
+        throw new Error('Cannot complete order without receiving OTP first');
+      }
+
+      // Tell SastaOTP to complete (status = 6)
+      await sastaOtpService.setStatus(order.activationId, 6);
+
+      return res.status(200).json({
+        success: true,
+        message: 'Order marked as completed',
+      });
+    } else {
+      res.status(400);
+      throw new Error('Invalid action. Must be cancel or complete');
+    }
+  } catch (error) {
+    next(error);
+  }
+};
+
+// @desc    Get order history
+// @route   GET /api/otp/history
+// @access  Private
+export const getOrderHistory = async (req, res, next) => {
+  try {
+    const orders = await OTPOrder.find({ userId: req.user.id })
+      .sort({ createdAt: -1 })
+      .limit(100);
+
+    return res.status(200).json({
+      success: true,
+      orders,
+    });
+  } catch (error) {
+    next(error);
+  }
+};
