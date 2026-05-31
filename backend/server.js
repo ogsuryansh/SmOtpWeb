@@ -59,7 +59,9 @@ app.get('/api/health', (req, res) => {
   res.status(200).json({
     status: 'healthy',
     timestamp: new Date(),
-    uptime: process.uptime()
+    uptime: process.uptime(),
+    frontendUrl: process.env.FRONTEND_URL || 'not set',
+    allowedOrigins: allowedOrigins
   });
 });
 
