@@ -1,10 +1,15 @@
 import fs from 'fs';
 import path from 'path';
 import { fileURLToPath } from 'url';
+import os from 'os';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
-const DATA_DIR = path.join(__dirname, '..', 'data');
+
+const isVercel = process.env.VERCEL || process.env.NOW_BUILDER;
+const DATA_DIR = isVercel 
+  ? path.join(os.tmpdir(), 'data')
+  : path.join(__dirname, '..', 'data');
 
 // Ensure data directory exists
 if (!fs.existsSync(DATA_DIR)) {

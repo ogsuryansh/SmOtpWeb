@@ -1,10 +1,20 @@
 import multer from 'multer';
 import path from 'path';
+import os from 'os';
+import fs from 'fs';
+
+const isVercel = process.env.VERCEL || process.env.NOW_BUILDER;
+const uploadDir = isVercel ? path.join(os.tmpdir(), 'uploads') : 'uploads/';
+
+// Ensure upload directory exists (especially on Vercel /tmp)
+if (isVercel && !fs.existsSync(uploadDir)) {
+  fs.mkdirSync(uploadDir, { recursive: true });
+}
 
 // Set storage engine
 const storage = multer.diskStorage({
   destination: (req, file, cb) => {
-    cb(null, 'uploads/');
+    cb(null, uploadDir);
   },
   filename: (req, file, cb) => {
     // Generate unique name: proof-timestamp-random.extension
