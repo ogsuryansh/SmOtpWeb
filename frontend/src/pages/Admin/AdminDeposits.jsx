@@ -1,5 +1,5 @@
 import React, { useEffect, useState, useCallback } from 'react';
-import { api } from '../../services/api';
+import { api, API_URL } from '../../services/api';
 import { Check, X, Eye, Loader, ClipboardList, AlertCircle } from 'lucide-react';
 
 const AdminDeposits = () => {
@@ -218,7 +218,7 @@ const AdminDeposits = () => {
             </h2>
             <div style={{ display: 'flex', justifyContent: 'center', backgroundColor: '#000', borderRadius: 'var(--border-radius-sm)', padding: '0.5rem' }}>
               <img 
-                src={`http://localhost:5000${viewScreenshot}`} 
+                src={`${API_URL}${viewScreenshot}`} 
                 alt="Receipt Proof" 
                 style={{ maxWidth: '100%', maxHeight: '500px', objectFit: 'contain' }} 
               />

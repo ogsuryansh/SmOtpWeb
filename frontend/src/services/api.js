@@ -1,4 +1,5 @@
-const BASE_URL = 'http://localhost:5000/api';
+export const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000';
+const BASE_URL = `${API_URL}/api`;
 
 // Helper to make fetch calls
 async function request(endpoint, options = {}) {

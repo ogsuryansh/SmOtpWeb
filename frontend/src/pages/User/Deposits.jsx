@@ -1,5 +1,5 @@
 import React, { useEffect, useState, useCallback } from 'react';
-import { api } from '../../services/api';
+import { api, API_URL } from '../../services/api';
 import { useAuth } from '../../context/AuthContext';
 import { Copy, Check, Upload, Clock, Loader, AlertTriangle, ShieldCheck } from 'lucide-react';
 
@@ -135,7 +135,7 @@ const Deposits = () => {
               {paymentInfo.paymentQrCode ? (
                 <div style={{ padding: '1rem', border: '1px solid var(--border-color)', borderRadius: 'var(--border-radius-md)', backgroundColor: '#ffffff', width: '220px', height: '220px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
                   <img 
-                    src={paymentInfo.paymentQrCode} 
+                    src={paymentInfo.paymentQrCode.startsWith('http') ? paymentInfo.paymentQrCode : `${API_URL}${paymentInfo.paymentQrCode}`} 
                     alt="Payment QR Code" 
                     style={{ maxWidth: '100%', maxHeight: '100%', objectFit: 'contain' }} 
                   />
