@@ -125,15 +125,26 @@ export const sastaOtpService = {
         const pricesUrl = `${BASE_URL}?api_key=${apiKey}&action=getPrices&service=${serviceCode}&format=json`;
         const countriesUrl = `${BASE_URL}?api_key=${apiKey}&action=getCountries&format=json`;
 
-        const [serviceRes, pricesRes, countriesRes] = await Promise.all([
-          fetch(serviceUrl),
-          fetch(pricesUrl),
-          fetch(countriesUrl)
-        ]);
-
+        // Fetch sequentially to avoid rate-limiting from the provider
+        const serviceRes = await fetch(serviceUrl);
         const serviceData = await serviceRes.json();
+        console.log('DEBUG: SastaOTP serviceData:', JSON.stringify(serviceData).substring(0, 300) + '...');
+
+        const pricesRes = await fetch(pricesUrl);
         const pricesData = await pricesRes.json();
+        console.log('DEBUG: SastaOTP pricesData:', JSON.stringify(pricesData).substring(0, 300) + '...');
+        
+        if (pricesData.status === 'ERROR') {
+          throw new Error(`SastaOTP getPrices error: ${pricesData.message || pricesData.error || 'Unknown'}`);
+        }
+
+        const countriesRes = await fetch(countriesUrl);
         const countriesData = await countriesRes.json();
+        console.log('DEBUG: SastaOTP countriesData keys:', Object.keys(countriesData.countries || {}).length);
+
+        if (countriesData.status === 'ERROR') {
+          throw new Error(`SastaOTP getCountries error: ${countriesData.message || countriesData.error || 'Unknown'}`);
+        }
 
         const serviceInfo = serviceData.services?.[serviceCode];
         if (serviceInfo) {
@@ -311,8 +322,31 @@ export const sastaOtpService = {
       if (multiSms) url += `&multiSMS=1`;
 
       const res = await fetch(url);
-      const data = await res.json();
+      const text = await res.text();
       
+      let data;
+      try {
+        // Attempt to parse as JSON first
+        data = JSON.parse(text);
+      } catch (e) {
+        // If it fails, it's likely a standard text response (e.g., ACCESS_NUMBER:123:456 or NO_NUMBERS)
+        if (text.startsWith('ACCESS_NUMBER:')) {
+          const parts = text.split(':');
+          data = {
+            status: 'OK',
+            activation_id: parts[1],
+            number: parts[2],
+            phone_number: parts[2],
+            service: serviceCode,
+            service_code: serviceCode,
+            country: countryCode,
+            country_code: countryCode
+          };
+        } else {
+          throw new Error(text); // e.g., NO_BALANCE, NO_NUMBERS, NO_BALANCE_FOR_NUMBER
+        }
+      }
+
       await logApiCall('getNumber', params, data, false);
 
       // Handle raw string error codes if API returns status: "ACCESS_NUMBER" style or similar

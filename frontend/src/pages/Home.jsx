@@ -1,7 +1,7 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
-import logoImg from '../assets/photo_2026-05-30_02-34-44.jpg';
+
 import { 
   ShieldCheck, 
   Smartphone, 
@@ -41,15 +41,11 @@ const Home = () => {
           
           {/* Stylized Glowing Logo */}
           <Link to="/" style={{ textDecoration: 'none', display: 'flex', alignItems: 'center', gap: '0.65rem' }}>
-            <img 
-              src={logoImg} 
-              alt="SmWebOtp Logo" 
+            <Smartphone 
+              size={26} 
               style={{
-                width: '38px',
-                height: '38px',
-                borderRadius: '10px',
-                objectFit: 'cover',
-                boxShadow: '0 4px 15px var(--primary-glow)'
+                color: 'var(--primary)',
+                filter: 'drop-shadow(0 2px 8px var(--primary-glow))'
               }} 
             />
             <span className="landing-logo-text" style={{
@@ -59,7 +55,7 @@ const Home = () => {
               letterSpacing: '-0.03em',
               color: 'var(--text-primary)'
             }}>
-              SmWeb<span style={{ color: 'var(--primary)' }}>Otp</span>
+              OTP<span style={{ color: 'var(--primary)' }}>Addaa</span>
             </span>
           </Link>
 
@@ -310,17 +306,11 @@ const Home = () => {
         <div style={{ maxWidth: '1200px', margin: '0 auto', display: 'flex', justifyContent: 'space-between', flexWrap: 'wrap', gap: '2rem' }} className="flex justify-between">
           <div>
             <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '1rem' }}>
-              <img 
-                src={logoImg} 
-                alt="SmWebOtp Logo" 
-                style={{
-                  width: '24px',
-                  height: '24px',
-                  borderRadius: '6px',
-                  objectFit: 'cover'
-                }} 
+              <Smartphone 
+                size={18} 
+                style={{ color: 'var(--primary)' }} 
               />
-              <span style={{ fontWeight: 800, color: 'var(--text-primary)' }}>SmWebOtp</span>
+              <span style={{ fontWeight: 800, color: 'var(--text-primary)' }}>OTPAddaa</span>
             </div>
             <p style={{ maxWidth: '300px', fontSize: '0.85rem' }}>Secure temporary virtual numbers for seamless online verifications worldwide.</p>
           </div>
@@ -339,7 +329,7 @@ const Home = () => {
           </div>
         </div>
         <div style={{ maxWidth: '1200px', margin: '2rem auto 0', paddingTop: '1.5rem', borderTop: '1px solid var(--border-color)', textAlign: 'center', fontSize: '0.8rem' }}>
-          <p>&copy; {new Date().getFullYear()} SmWebOtp. All rights reserved. Powered by SastaOTP API integration.</p>
+          <p>&copy; {new Date().getFullYear()} OTPAddaa. All rights reserved. Powered by SastaOTP API integration.</p>
         </div>
       </footer>
 

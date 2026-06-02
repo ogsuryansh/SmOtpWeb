@@ -2,14 +2,15 @@ import React, { useState } from 'react';
 import { Link, useLocation, Outlet } from 'react-router-dom';
 import Header from './Header';
 import { useAuth } from '../../context/AuthContext';
-import logoImg from '../../assets/photo_2026-05-30_02-34-44.jpg';
+
 import { 
   LayoutDashboard, 
   Smartphone, 
   PlusCircle, 
   User, 
   Shield, 
-  X 
+  X,
+  History
 } from 'lucide-react';
 
 const DashboardLayout = () => {
@@ -23,6 +24,7 @@ const DashboardLayout = () => {
   const menuItems = [
     { name: 'Dashboard', path: '/dashboard', icon: <LayoutDashboard size={20} /> },
     { name: 'Buy OTP Number', path: '/buy', icon: <Smartphone size={20} /> },
+    { name: 'Order History', path: '/history', icon: <History size={20} /> },
     { name: 'Deposit Funds', path: '/deposits', icon: <PlusCircle size={20} /> },
     { name: 'My Profile', path: '/profile', icon: <User size={20} /> },
   ];
@@ -34,18 +36,14 @@ const DashboardLayout = () => {
       {/* Sidebar */}
       <aside className={`sidebar ${sidebarOpen ? 'open' : ''}`}>
         <div className="sidebar-brand">
-          <img 
-            src={logoImg} 
-            alt="Logo" 
+          <Smartphone 
+            size={22} 
             style={{
-              width: '32px',
-              height: '32px',
-              borderRadius: '8px',
-              objectFit: 'cover',
-              boxShadow: '0 2px 10px var(--primary-glow)'
+              color: 'var(--primary)',
+              filter: 'drop-shadow(0 2px 6px var(--primary-glow))'
             }} 
           />
-          <span>SmWebOtp</span>
+          <span>OTPAddaa</span>
           <button 
             className="menu-toggle" 
             onClick={toggleSidebar} 

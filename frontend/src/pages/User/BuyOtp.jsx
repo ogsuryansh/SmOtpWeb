@@ -114,6 +114,11 @@ const SearchableDropdown = ({ id, options, value, onChange, placeholder, icon: I
                       <div style={{ fontWeight: 500, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{opt.label}</div>
                       {opt.subLabel && <div style={{ fontSize: '0.72rem', color: 'var(--text-muted)', marginTop: '1px' }}>{opt.subLabel}</div>}
                     </div>
+                    {opt.price !== undefined && opt.price !== null && (
+                      <span style={{ fontSize: '0.85rem', fontWeight: 700, color: 'var(--primary)', marginLeft: 'auto', flexShrink: 0 }}>
+                        ₹{opt.price.toFixed(2)}
+                      </span>
+                    )}
                   </div>
                 );
               })
@@ -139,6 +144,12 @@ const BuyOtp = () => {
   const [isMock, setIsMock] = useState(false);
   const [countriesLoading, setCountriesLoading] = useState(false);
   const [multiSms, setMultiSms] = useState(false);
+  const [multiSmsMultiplier, setMultiSmsMultiplier] = useState(2);
+  const [sortBy, setSortBy] = useState('default'); // 'default', 'cheap-first', 'expensive-first'
+
+  window.rawServices = rawServices;
+  window.selectedService = selectedService;
+  window.countriesLoading = countriesLoading;
 
   useEffect(() => {
     (async () => {
@@ -148,8 +159,14 @@ const BuyOtp = () => {
         if (res.success) {
           setRawServices(res.services || {});
           setIsMock(res.isMock || false);
+          if (res.multiSmsMultiplier) {
+            setMultiSmsMultiplier(res.multiSmsMultiplier);
+          }
           const keys = Object.keys(res.services || {});
-          if (keys.length > 0) setSelectedService(keys[0]);
+          if (keys.length > 0) {
+            const defaultService = keys.includes('tg') ? 'tg' : keys[0];
+            setSelectedService(defaultService);
+          }
         }
       } catch (err) {
         setError(err.message || 'Failed to load services');
@@ -168,14 +185,19 @@ const BuyOtp = () => {
       try {
         setCountriesLoading(true);
         const res = await api.otp.getServices(selectedService);
-        if (res.success && res.services[selectedService] && isMounted) {
-          setRawServices(prev => ({
-            ...prev,
-            [selectedService]: res.services[selectedService]
-          }));
+        if (res.success) {
+          if (res.services[selectedService]) {
+            setRawServices(prev => ({
+              ...prev,
+              [selectedService]: res.services[selectedService]
+            }));
+          } else {
+            setError(`Debug: res.services[${selectedService}] is undefined! Keys: ` + Object.keys(res.services || {}).join(','));
+          }
         }
       } catch (err) {
         console.error('Failed to load country prices for service:', selectedService, err);
+        if (isMounted) setError(`Failed to load countries: ${err.message}`);
       } finally {
         if (isMounted) {
           setCountriesLoading(false);
@@ -222,14 +244,39 @@ const BuyOtp = () => {
     };
   });
 
-  // Auto-select first available country when service or countries change
+  // Sort countryOptions based on sortBy state
+  const sortedCountryOptions = React.useMemo(() => {
+    const list = [...countryOptions];
+    if (sortBy === 'cheap-first') {
+      return list.sort((a, b) => {
+        const pA = a.price ?? 999999;
+        const pB = b.price ?? 999999;
+        return pA - pB;
+      });
+    }
+    if (sortBy === 'expensive-first') {
+      return list.sort((a, b) => {
+        const pA = a.price ?? 0;
+        const pB = b.price ?? 0;
+        return pB - pA;
+      });
+    }
+    return list; // Default (India first / alphabetical as returned by backend)
+  }, [countryOptions, sortBy]);
+
+  // Auto-select first available country when service or countries change or sort mode changes
   useEffect(() => {
-    if (countryOptions.length === 0) return;
-    const isValid = countryOptions.some(o => o.value === selectedCountry);
-    if (isValid) return;
-    const hasIndia = countryOptions.find(o => o.value === '22' || o.label.toLowerCase() === 'india');
-    setSelectedCountry(hasIndia ? hasIndia.value : countryOptions[0].value);
-  }, [selectedService, countryOptions, selectedCountry]);
+    if (sortedCountryOptions.length === 0) return;
+    
+    if (sortBy === 'cheap-first' || sortBy === 'expensive-first') {
+      // Auto-select the first item in the sorted list (lowest or highest price)
+      setSelectedCountry(sortedCountryOptions[0].value);
+    } else {
+      // Default: check if India exists, otherwise select the first item
+      const hasIndia = sortedCountryOptions.find(o => o.value === '22' || o.label.toLowerCase() === 'india');
+      setSelectedCountry(hasIndia ? hasIndia.value : sortedCountryOptions[0].value);
+    }
+  }, [selectedService, sortedCountryOptions, sortBy]);
 
   // ── Price / availability lookup ───────────────────────────────────────────
   const details = useCallback(() => {
@@ -237,12 +284,16 @@ const BuyOtp = () => {
     const srv = rawServices[selectedService];
     const c = (srv.countries || []).find(c => String(c.country_code || c.code) === String(selectedCountry));
     if (!c) return null;
+    let price = c.price ?? null;
+    if (price !== null && multiSms) {
+      price = price * multiSmsMultiplier;
+    }
     return {
-      price: c.price ?? null,
+      price: price,
       qty: c.qty ?? 0,
       available: (c.qty ?? 0) > 0,
     };
-  }, [selectedService, selectedCountry, rawServices])();
+  }, [selectedService, selectedCountry, rawServices, multiSms, multiSmsMultiplier])();
 
   const handlePurchase = async () => {
     setError('');
@@ -339,23 +390,52 @@ const BuyOtp = () => {
               </div>
 
               <div className="form-group">
-                <label className="form-label">2. Target Country</label>
+                <div className="flex justify-between align-center m-b-1" style={{ flexWrap: 'wrap', gap: '0.5rem' }}>
+                  <label className="form-label" style={{ margin: 0 }}>2. Target Country</label>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
+                    <span className="text-secondary" style={{ fontSize: '0.75rem', fontWeight: 600 }}>Sort by:</span>
+                    <select
+                      value={sortBy}
+                      onChange={(e) => setSortBy(e.target.value)}
+                      style={{
+                        background: 'var(--bg-secondary)',
+                        border: '1px solid var(--border-color)',
+                        borderRadius: 'var(--border-radius-sm)',
+                        color: 'var(--text-primary)',
+                        padding: '0.2rem 0.5rem',
+                        fontSize: '0.75rem',
+                        fontWeight: 600,
+                        cursor: 'pointer',
+                        outline: 'none'
+                      }}
+                    >
+                      <option value="default">Default</option>
+                      <option value="cheap-first">Price: Low to High</option>
+                      <option value="expensive-first">Price: High to Low</option>
+                    </select>
+                  </div>
+                </div>
                 {countriesLoading ? (
                   <div className="flex align-center gap-2 text-secondary" style={{ fontSize: '0.9rem', minHeight: '44px' }}>
                     <Loader size={16} className="spinner" />
                     <span>Loading countries &amp; prices...</span>
                   </div>
-                ) : countryOptions.length === 0 ? (
+                ) : sortedCountryOptions.length === 0 ? (
                   <p className="text-secondary" style={{ fontSize: '0.85rem' }}>No countries available for this service.</p>
                 ) : (
                   <SearchableDropdown
-                    id="country-dd" options={countryOptions} value={selectedCountry} onChange={setSelectedCountry}
+                    id="country-dd" options={sortedCountryOptions} value={selectedCountry} onChange={setSelectedCountry}
                     placeholder="Select a country..." icon={Globe}
                     renderLabel={opt => (
-                      <span style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                      <span style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', width: '100%' }}>
                         <span style={{ fontSize: '1.15rem' }}>{opt.icon}</span>
                         <b>{opt.label}</b>
                         <span style={{ color: 'var(--text-muted)', fontSize: '0.8rem' }}>({opt.subLabel})</span>
+                        {opt.price !== undefined && opt.price !== null && (
+                          <span style={{ marginLeft: 'auto', fontWeight: 700, color: 'var(--primary)', fontSize: '0.9rem' }}>
+                            ₹{opt.price.toFixed(2)}
+                          </span>
+                        )}
                       </span>
                     )}
                   />

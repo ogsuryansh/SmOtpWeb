@@ -26,6 +26,7 @@ const seedSettings = async () => {
     { key: 'paymentQrCode', value: '' }, // QR image URL/Base64
     { key: 'paymentUpiId', value: 'pay@upi' },
     { key: 'markupPercentage', value: 20 }, // 20% mark-up on API prices
+    { key: 'multiSmsMultiplier', value: 2 }, // multiplier for multi-SMS numbers (e.g. 2x)
   ];
 
   for (const item of defaultSettings) {
@@ -38,12 +39,12 @@ const seedSettings = async () => {
 };
 
 const seedAdmin = async () => {
-  const adminExists = await User.findOne({ role: 'admin' });
-  if (!adminExists) {
-    const adminEmail = process.env.DEFAULT_ADMIN_EMAIL || 'admin@smwebotp.com';
-    const adminUsername = process.env.DEFAULT_ADMIN_USERNAME || 'admin';
-    const adminPassword = process.env.DEFAULT_ADMIN_PASSWORD || 'AdminPassword123!';
+  const adminEmail = process.env.DEFAULT_ADMIN_EMAIL || 'admin@otpaddaa.com';
+  const adminUsername = process.env.DEFAULT_ADMIN_USERNAME || 'admin';
+  const adminPassword = process.env.DEFAULT_ADMIN_PASSWORD || 'AdminPassword123!';
 
+  const admin = await User.findOne({ role: 'admin' });
+  if (!admin) {
     await User.create({
       username: adminUsername,
       email: adminEmail,
@@ -52,6 +53,25 @@ const seedAdmin = async () => {
       balance: 1000.0, // Pre-fund admin wallet for testing
     });
     console.log(`Seeded default admin user: ${adminEmail}`);
+  } else {
+    let needsSave = false;
+    if (admin.username !== adminUsername) {
+      admin.username = adminUsername;
+      needsSave = true;
+    }
+    if (admin.email !== adminEmail) {
+      admin.email = adminEmail;
+      needsSave = true;
+    }
+    const isMatch = await admin.matchPassword(adminPassword);
+    if (!isMatch) {
+      admin.password = adminPassword;
+      needsSave = true;
+    }
+    if (needsSave) {
+      await admin.save();
+      console.log(`Updated seeded admin credentials to match current .env settings`);
+    }
   }
 };
 

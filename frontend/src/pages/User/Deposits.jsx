@@ -1,7 +1,8 @@
 import React, { useEffect, useState, useCallback } from 'react';
 import { api, API_URL } from '../../services/api';
 import { useAuth } from '../../context/AuthContext';
-import { Copy, Check, Upload, Clock, Loader, AlertTriangle, ShieldCheck } from 'lucide-react';
+import { Copy, Check, Upload, Clock, Loader, AlertTriangle, ShieldCheck, Send } from 'lucide-react';
+import defaultQr from '../../assets/qr.jpg';
 
 const Deposits = () => {
   const { refreshUser } = useAuth();
@@ -27,6 +28,7 @@ const Deposits = () => {
   const [copied, setCopied] = useState(false);
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
+  const [showSuccessModal, setShowSuccessModal] = useState(false);
 
   // Fetch payment info & user deposit history
   const fetchData = useCallback(async () => {
@@ -72,8 +74,8 @@ const Deposits = () => {
     setError('');
     setSuccess('');
 
-    if (!amount || !utr || !screenshot) {
-      setError('Please fill all fields and upload screenshot proof');
+    if (!amount || !utr) {
+      setError('Please fill all fields');
       return;
     }
 
@@ -85,7 +87,6 @@ const Deposits = () => {
     const formData = new FormData();
     formData.append('amount', amount);
     formData.append('utr', utr.trim());
-    formData.append('screenshot', screenshot);
 
     try {
       setIsSubmitting(true);
@@ -94,11 +95,7 @@ const Deposits = () => {
         setSuccess('Deposit request submitted successfully. Admin will review it shortly.');
         setAmount('');
         setUtr('');
-        setScreenshot(null);
-        
-        // Reset file input in DOM
-        const fileInput = document.getElementById('screenshot-file');
-        if (fileInput) fileInput.value = '';
+        setShowSuccessModal(true);
 
         // Refresh list
         fetchData();
@@ -133,17 +130,20 @@ const Deposits = () => {
           ) : (
             <div className="flex flex-column align-center gap-2" style={{ width: '100%' }}>
               {paymentInfo.paymentQrCode ? (
-                <div style={{ padding: '1rem', border: '1px solid var(--border-color)', borderRadius: 'var(--border-radius-md)', backgroundColor: '#ffffff', width: '220px', height: '220px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                <div style={{ padding: '0.5rem', border: '1px solid var(--border-color)', borderRadius: 'var(--border-radius-md)', backgroundColor: '#ffffff', width: '100%', maxWidth: '300px', height: 'auto', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
                   <img 
                     src={paymentInfo.paymentQrCode.startsWith('http') ? paymentInfo.paymentQrCode : `${API_URL}${paymentInfo.paymentQrCode}`} 
                     alt="Payment QR Code" 
-                    style={{ maxWidth: '100%', maxHeight: '100%', objectFit: 'contain' }} 
+                    style={{ width: '100%', height: 'auto', display: 'block', borderRadius: '4px' }} 
                   />
                 </div>
               ) : (
-                <div style={{ padding: '2rem 1rem', border: '1px dashed var(--border-color)', borderRadius: 'var(--border-radius-md)', textAlign: 'center', width: '100%', color: 'var(--text-secondary)' }}>
-                  <AlertTriangle size={32} style={{ margin: '0 auto 0.5rem', color: 'var(--warning)' }} />
-                  <p style={{ fontSize: '0.85rem' }}>No QR Code uploaded by administrator. Please use the UPI ID below to pay.</p>
+                <div style={{ padding: '0.5rem', border: '1px solid var(--border-color)', borderRadius: 'var(--border-radius-md)', backgroundColor: '#ffffff', width: '100%', maxWidth: '300px', height: 'auto', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                  <img 
+                    src={defaultQr} 
+                    alt="Payment QR Code" 
+                    style={{ width: '100%', height: 'auto', display: 'block', borderRadius: '4px' }} 
+                  />
                 </div>
               )}
 
@@ -159,6 +159,19 @@ const Deposits = () => {
 
               <div className="badge badge-primary w-full" style={{ padding: '0.6rem 1rem', textTransform: 'none', borderRadius: 'var(--border-radius-sm)' }}>
                 ℹ️ Minimum deposit amount: <b>₹{paymentInfo.minDeposit}</b>
+              </div>
+
+              <div className="w-full" style={{ marginTop: '0.5rem' }}>
+                <a 
+                  href="https://t.me/OTPAddaa_Support" 
+                  target="_blank" 
+                  rel="noopener noreferrer" 
+                  className="btn btn-secondary w-full" 
+                  style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.5rem', padding: '0.6rem' }}
+                >
+                  <Send size={14} />
+                  <span>Telegram Support</span>
+                </a>
               </div>
             </div>
           )}
@@ -197,21 +210,6 @@ const Deposits = () => {
                 onChange={(e) => setUtr(e.target.value.replace(/\s/g, ''))}
                 required
               />
-            </div>
-
-            <div className="form-group">
-              <label className="form-label" htmlFor="screenshot-file">Upload Screenshot Proof</label>
-              <div style={{ position: 'relative' }}>
-                <input
-                  type="file"
-                  id="screenshot-file"
-                  className="form-control"
-                  style={{ padding: '0.5rem 1rem' }}
-                  accept="image/*"
-                  onChange={(e) => setScreenshot(e.target.files[0])}
-                  required
-                />
-              </div>
             </div>
 
             <button type="submit" className="btn btn-primary w-full m-t-2" disabled={isSubmitting}>
@@ -286,6 +284,27 @@ const Deposits = () => {
           </div>
         )}
       </div>
+
+      {showSuccessModal && (
+        <div style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, background: 'rgba(0,0,0,0.6)', backdropFilter: 'blur(4px)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 1000, padding: '1rem' }}>
+          <div className="card text-center" style={{ maxWidth: '400px', width: '100%', padding: '2rem', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '1rem', border: '1px solid var(--border-color)', boxShadow: '0 20px 25px -5px rgba(0, 0, 0, 0.3)' }}>
+            <div style={{ width: '60px', height: '60px', borderRadius: '50%', background: 'rgba(16,185,129,0.15)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--success)' }}>
+              <ShieldCheck size={36} />
+            </div>
+            <h3 style={{ fontSize: '1.25rem', fontWeight: 700, margin: 0 }}>Request Submitted</h3>
+            <p className="text-secondary" style={{ fontSize: '0.9rem', lineHeight: '1.4', margin: 0 }}>
+              Deposit request submitted, wait for few minutes.
+            </p>
+            <button 
+              onClick={() => setShowSuccessModal(false)} 
+              className="btn btn-primary w-full m-t-1"
+              style={{ padding: '0.6rem 1rem' }}
+            >
+              Okay
+            </button>
+          </div>
+        </div>
+      )}
     </div>
   );
 };

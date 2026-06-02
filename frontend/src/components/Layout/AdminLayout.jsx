@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { Link, useLocation, Outlet } from 'react-router-dom';
 import Header from './Header';
-import logoImg from '../../assets/photo_2026-05-30_02-34-44.jpg';
+
 import { 
   ShieldAlert, 
   Users, 
@@ -34,18 +34,14 @@ const AdminLayout = () => {
       {/* Sidebar */}
       <aside className={`sidebar ${sidebarOpen ? 'open' : ''}`} style={{ borderRight: '1px solid var(--danger)' }}>
         <div className="sidebar-brand">
-          <img 
-            src={logoImg} 
-            alt="Logo" 
+          <ShieldAlert 
+            size={22} 
             style={{
-              width: '32px',
-              height: '32px',
-              borderRadius: '8px',
-              objectFit: 'cover',
-              boxShadow: '0 2px 10px rgba(239, 68, 68, 0.3)'
+              color: 'var(--danger)',
+              filter: 'drop-shadow(0 2px 6px rgba(239, 68, 68, 0.4))'
             }} 
           />
-          <span>Admin Center</span>
+          <span>OTPAddaa Admin</span>
           <button 
             className="menu-toggle" 
             onClick={toggleSidebar} 

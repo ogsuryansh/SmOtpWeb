@@ -48,12 +48,6 @@ export const createDepositRequest = async (req, res, next) => {
       throw new Error(`Minimum deposit amount is INR ${minAmount}`);
     }
 
-    // Check if screenshot was uploaded
-    if (!req.file) {
-      res.status(400);
-      throw new Error('Please upload payment screenshot proof');
-    }
-
     // Check if UTR already exists
     const utrExists = await Deposit.findOne({ utr: utr.trim() });
     if (utrExists) {
@@ -62,7 +56,7 @@ export const createDepositRequest = async (req, res, next) => {
     }
 
     // Create deposit request
-    const screenshotPath = `/uploads/${req.file.filename}`;
+    const screenshotPath = req.file ? `/uploads/${req.file.filename}` : '';
 
     const deposit = await Deposit.create({
       userId: req.user.id,

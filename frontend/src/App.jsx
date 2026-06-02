@@ -19,6 +19,7 @@ import Dashboard from './pages/User/Dashboard';
 import BuyOtp from './pages/User/BuyOtp';
 import Deposits from './pages/User/Deposits';
 import Profile from './pages/User/Profile';
+import History from './pages/User/History';
 
 // Admin Pages
 import AdminDashboard from './pages/Admin/AdminDashboard';
@@ -119,6 +120,7 @@ function App() {
               <Route path="buy" element={<BuyOtp />} />
               <Route path="deposits" element={<Deposits />} />
               <Route path="profile" element={<Profile />} />
+              <Route path="history" element={<History />} />
             </Route>
 
             {/* Protected Admin Console Routes */}

@@ -154,14 +154,18 @@ const AdminDeposits = () => {
                     <td style={{ fontWeight: 700 }}>₹{dep.amount.toFixed(2)}</td>
                     <td style={{ fontFamily: 'monospace', fontWeight: 600 }}>{dep.utr}</td>
                     <td>
-                      <button
-                        onClick={() => setViewScreenshot(dep.screenshot)}
-                        className="btn btn-secondary flex align-center gap-1"
-                        style={{ padding: '0.4rem 0.8rem', fontSize: '0.8rem' }}
-                      >
-                        <Eye size={14} />
-                        <span>View Proof</span>
-                      </button>
+                      {dep.screenshot ? (
+                        <button
+                          onClick={() => setViewScreenshot(dep.screenshot)}
+                          className="btn btn-secondary flex align-center gap-1"
+                          style={{ padding: '0.4rem 0.8rem', fontSize: '0.8rem' }}
+                        >
+                          <Eye size={14} />
+                          <span>View Proof</span>
+                        </button>
+                      ) : (
+                        <span className="text-secondary" style={{ fontSize: '0.8rem' }}>No Proof</span>
+                      )}
                     </td>
                     <td>
                       <span className={`badge ${

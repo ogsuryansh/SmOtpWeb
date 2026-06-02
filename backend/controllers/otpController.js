@@ -42,10 +42,14 @@ export const getServices = async (req, res, next) => {
       }
     }
 
+    const multiplierSetting = await Setting.findOne({ key: 'multiSmsMultiplier' });
+    const multiSmsMultiplier = multiplierSetting ? parseFloat(multiplierSetting.value) : 2;
+
     return res.status(200).json({
       success: true,
       services,
       isMock: apiData.isMock || false,
+      multiSmsMultiplier,
     });
   } catch (error) {
     next(error);
@@ -103,7 +107,13 @@ export const buyNumber = async (req, res, next) => {
 
     const apiPrice = countryConfig.price;
     const markup = await getMarkupPercentage();
-    const finalPrice = parseFloat((apiPrice * (1 + markup / 100)).toFixed(2));
+    let finalPrice = parseFloat((apiPrice * (1 + markup / 100)).toFixed(2));
+
+    if (multiSms) {
+      const multiplierSetting = await Setting.findOne({ key: 'multiSmsMultiplier' });
+      const multiSmsMultiplier = multiplierSetting ? parseFloat(multiplierSetting.value) : 2;
+      finalPrice = parseFloat((finalPrice * multiSmsMultiplier).toFixed(2));
+    }
 
     // 2. Atomic Balance Check & Reservation
     // We deduct the balance immediately to prevent double spending.
@@ -345,9 +355,40 @@ export const updateOrderStatus = async (req, res, next) => {
         success: true,
         message: 'Order marked as completed',
       });
+    } else if (action === 'retry') {
+      if (!order.multiSms) {
+        res.status(400);
+        throw new Error('This number does not support multi-OTP reuse');
+      }
+
+      // Tell SastaOTP to retry/get another SMS (status = 3)
+      const resText = await sastaOtpService.setStatus(order.activationId, 3);
+
+      if (resText === 'ACCESS_READY' || resText === 'ACCESS_RETRY_GET' || resText.includes('ACCESS')) {
+        order.status = 'pending';
+        order.smsCode = undefined;
+        order.smsText = undefined;
+        order.expiresAt = new Date(Date.now() + 1200 * 1000); // Reset expiry timer to 20 mins
+        await order.save();
+
+        await AuditLog.create({
+          action: 'OTP_ORDER_RETRY_GET',
+          details: { orderId: order._id, activationId: order.activationId },
+          userId: req.user.id,
+        });
+
+        return res.status(200).json({
+          success: true,
+          message: 'Ready for next OTP. Check dashboard or history for incoming SMS.',
+          order,
+        });
+      } else {
+        res.status(400);
+        throw new Error(`Provider denied requesting next OTP: ${resText}`);
+      }
     } else {
       res.status(400);
-      throw new Error('Invalid action. Must be cancel or complete');
+      throw new Error('Invalid action. Must be cancel, complete, or retry');
     }
   } catch (error) {
     next(error);
