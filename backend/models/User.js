@@ -1,56 +1,56 @@
+import mongoose from 'mongoose';
 import bcrypt from 'bcryptjs';
-import JsonCollection from '../config/jsonDb.js';
 
-class UserCollection extends JsonCollection {
-  constructor() {
-    super('users');
+const userSchema = new mongoose.Schema(
+  {
+    username: {
+      type: String,
+      required: true,
+      unique: true,
+    },
+    email: {
+      type: String,
+      required: true,
+      unique: true,
+    },
+    password: {
+      type: String,
+      required: true,
+      select: false,
+    },
+    role: {
+      type: String,
+      enum: ['user', 'admin'],
+      default: 'user',
+    },
+    balance: {
+      type: Number,
+      default: 0,
+    },
+    isBanned: {
+      type: Boolean,
+      default: false,
+    },
+    forgotPasswordToken: String,
+    forgotPasswordExpire: Date,
+  },
+  {
+    timestamps: true,
   }
+);
 
-  // Override create to hash password
-  async create(obj) {
-    const hashedObj = { ...obj };
-    if (hashedObj.password) {
-      const salt = bcrypt.genSaltSync(10);
-      hashedObj.password = bcrypt.hashSync(hashedObj.password, salt);
-    }
-    
-    // Add default values
-    if (hashedObj.balance === undefined) hashedObj.balance = 0;
-    if (hashedObj.isBanned === undefined) hashedObj.isBanned = false;
-    if (hashedObj.role === undefined) hashedObj.role = 'user';
+userSchema.methods.matchPassword = async function (enteredPassword) {
+  return await bcrypt.compare(enteredPassword, this.password);
+};
 
-    return super.create(hashedObj);
+userSchema.pre('save', async function (next) {
+  if (!this.isModified('password')) {
+    next();
+  } else {
+    const salt = await bcrypt.genSalt(10);
+    this.password = await bcrypt.hash(this.password, salt);
   }
+});
 
-  // Override wrapDocument to attach Mongoose-like doc methods
-  _wrapDocument(doc) {
-    const wrapped = super._wrapDocument(doc);
-    if (!wrapped) return null;
-
-    // Attach matchPassword method
-    Object.defineProperty(wrapped, 'matchPassword', {
-      enumerable: false,
-      value: async function(enteredPassword) {
-        return bcrypt.compareSync(enteredPassword, this.password);
-      }
-    });
-
-    // Handle password hashing on manual save
-    const self = this;
-    const originalSave = wrapped.save;
-    wrapped.save = async function() {
-      // Check if password has been modified (changed to plain text)
-      // If it doesn't start with standard bcrypt prefix '$2a$' or '$2b$', hash it
-      if (this.password && !this.password.startsWith('$2a$') && !this.password.startsWith('$2b$')) {
-        const salt = bcrypt.genSaltSync(10);
-        this.password = bcrypt.hashSync(this.password, salt);
-      }
-      return originalSave.call(this);
-    };
-
-    return wrapped;
-  }
-}
-
-const User = new UserCollection();
+const User = mongoose.model('User', userSchema);
 export default User;

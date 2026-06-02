@@ -1,10 +1,33 @@
-import JsonCollection from '../config/jsonDb.js';
+import mongoose from 'mongoose';
 
-class TransactionCollection extends JsonCollection {
-  constructor() {
-    super('transactions');
+const transactionSchema = new mongoose.Schema(
+  {
+    userId: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: 'User',
+      required: true,
+    },
+    amount: {
+      type: Number,
+      required: true,
+    },
+    type: {
+      type: String,
+      enum: ['deposit', 'purchase', 'refund', 'bonus', 'penalty'],
+      required: true,
+    },
+    description: {
+      type: String,
+      required: true,
+    },
+    referenceId: {
+      type: String,
+    },
+  },
+  {
+    timestamps: true,
   }
-}
+);
 
-const Transaction = new TransactionCollection();
+const Transaction = mongoose.model('Transaction', transactionSchema);
 export default Transaction;

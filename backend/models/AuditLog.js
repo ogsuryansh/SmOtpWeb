@@ -1,10 +1,24 @@
-import JsonCollection from '../config/jsonDb.js';
+import mongoose from 'mongoose';
 
-class AuditLogCollection extends JsonCollection {
-  constructor() {
-    super('auditlogs');
+const auditLogSchema = new mongoose.Schema(
+  {
+    action: {
+      type: String,
+      required: true,
+    },
+    details: {
+      type: mongoose.Schema.Types.Mixed,
+    },
+    userId: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: 'User',
+      required: true,
+    },
+  },
+  {
+    timestamps: true,
   }
-}
+);
 
-const AuditLog = new AuditLogCollection();
+const AuditLog = mongoose.model('AuditLog', auditLogSchema);
 export default AuditLog;

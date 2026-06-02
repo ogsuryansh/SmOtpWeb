@@ -1,18 +1,68 @@
-import JsonCollection from '../config/jsonDb.js';
+import mongoose from 'mongoose';
 
-class OTPOrderCollection extends JsonCollection {
-  constructor() {
-    super('otporders');
+const otpOrderSchema = new mongoose.Schema(
+  {
+    userId: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: 'User',
+      required: true,
+    },
+    activationId: {
+      type: String,
+      required: true,
+    },
+    phoneNumber: {
+      type: String,
+      required: true,
+    },
+    service: {
+      type: String,
+      required: true,
+    },
+    serviceCode: {
+      type: String,
+      required: true,
+    },
+    country: {
+      type: String,
+      required: true,
+    },
+    countryCode: {
+      type: String,
+      required: true,
+    },
+    price: {
+      type: Number,
+      required: true,
+    },
+    apiPrice: {
+      type: Number,
+      required: true,
+    },
+    status: {
+      type: String,
+      enum: ['pending', 'completed', 'cancelled', 'expired'],
+      default: 'pending',
+    },
+    multiSms: {
+      type: Boolean,
+      default: false,
+    },
+    smsCode: {
+      type: String,
+    },
+    smsText: {
+      type: String,
+    },
+    expiresAt: {
+      type: Date,
+      required: true,
+    },
+  },
+  {
+    timestamps: true,
   }
+);
 
-  // Override create to add default field values
-  async create(obj) {
-    const newObj = { ...obj };
-    if (newObj.status === undefined) newObj.status = 'pending';
-    if (newObj.multiSms === undefined) newObj.multiSms = false;
-    return super.create(newObj);
-  }
-}
-
-const OTPOrder = new OTPOrderCollection();
+const OTPOrder = mongoose.model('OTPOrder', otpOrderSchema);
 export default OTPOrder;

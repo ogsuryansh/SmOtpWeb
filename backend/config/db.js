@@ -1,10 +1,11 @@
-import { connectJsonDb } from './jsonDb.js';
+import mongoose from 'mongoose';
 import Setting from '../models/Setting.js';
 import User from '../models/User.js';
 
 const connectDB = async () => {
   try {
-    connectJsonDb();
+    const conn = await mongoose.connect(process.env.MONGO_URI);
+    console.log(`MongoDB Connected: ${conn.connection.host}`);
     
     // Seed default settings
     await seedSettings();
@@ -22,11 +23,11 @@ const seedSettings = async () => {
     { key: 'siteName', value: 'OTPAddaa' },
     { key: 'maintenanceMode', value: 'false' },
     { key: 'sastaOtpApiKey', value: process.env.SASTA_OTP_API_KEY || 'mock' },
-    { key: 'minDeposit', value: 10 }, // Default min deposit INR 10
-    { key: 'paymentQrCode', value: '' }, // QR image URL/Base64
+    { key: 'minDeposit', value: 10 },
+    { key: 'paymentQrCode', value: '' },
     { key: 'paymentUpiId', value: 'pay@upi' },
-    { key: 'markupPercentage', value: 20 }, // 20% mark-up on API prices
-    { key: 'multiSmsMultiplier', value: 2 }, // multiplier for multi-SMS numbers (e.g. 2x)
+    { key: 'markupPercentage', value: 20 },
+    { key: 'multiSmsMultiplier', value: 2 },
   ];
 
   for (const item of defaultSettings) {
@@ -50,7 +51,7 @@ const seedAdmin = async () => {
       email: adminEmail,
       password: adminPassword,
       role: 'admin',
-      balance: 1000.0, // Pre-fund admin wallet for testing
+      balance: 1000.0,
     });
     console.log(`Seeded default admin user: ${adminEmail}`);
   } else {
@@ -63,14 +64,20 @@ const seedAdmin = async () => {
       admin.email = adminEmail;
       needsSave = true;
     }
-    const isMatch = await admin.matchPassword(adminPassword);
-    if (!isMatch) {
-      admin.password = adminPassword;
-      needsSave = true;
-    }
-    if (needsSave) {
-      await admin.save();
-      console.log(`Updated seeded admin credentials to match current .env settings`);
+    // Cannot directly compare password if select: false is used, 
+    // but we can assume admin uses the seeded one or changed it.
+    // Actually we need to fetch password explicitly to compare
+    const adminWithPassword = await User.findOne({ role: 'admin' }).select('+password');
+    if (adminWithPassword) {
+        const isMatch = await adminWithPassword.matchPassword(adminPassword);
+        if (!isMatch) {
+          adminWithPassword.password = adminPassword;
+          await adminWithPassword.save();
+          console.log(`Updated seeded admin credentials`);
+        } else if (needsSave) {
+          await admin.save();
+          console.log(`Updated seeded admin credentials`);
+        }
     }
   }
 };

@@ -1,17 +1,34 @@
-import JsonCollection from '../config/jsonDb.js';
+import mongoose from 'mongoose';
 
-class DepositCollection extends JsonCollection {
-  constructor() {
-    super('deposits');
+const depositSchema = new mongoose.Schema(
+  {
+    amount: {
+      type: Number,
+      required: true,
+    },
+    utr: {
+      type: String,
+      required: true,
+    },
+    status: {
+      type: String,
+      enum: ['pending', 'approved', 'rejected'],
+      default: 'pending',
+    },
+    userId: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: 'User',
+      required: true,
+    },
+    processedBy: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: 'User',
+    },
+  },
+  {
+    timestamps: true,
   }
+);
 
-  // Override create to add default status
-  async create(obj) {
-    const newObj = { ...obj };
-    if (newObj.status === undefined) newObj.status = 'pending';
-    return super.create(newObj);
-  }
-}
-
-const Deposit = new DepositCollection();
+const Deposit = mongoose.model('Deposit', depositSchema);
 export default Deposit;
