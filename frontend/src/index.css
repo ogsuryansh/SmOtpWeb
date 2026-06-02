@@ -45,23 +45,23 @@
 }
 
 [data-theme='dark'] {
-  /* Theme variables - Premium Dark Obsidian (Default) */
-  --bg-primary: #07090e;
-  --bg-secondary: #0b0f19;
-  --bg-card: rgba(15, 22, 38, 0.7);
-  --border-color: rgba(255, 255, 255, 0.06);
-  --border-hover: rgba(255, 255, 255, 0.12);
+  /* Theme variables - Premium Dark Cyan */
+  --bg-primary: #0b1120;
+  --bg-secondary: #111827;
+  --bg-card: #1e293b;
+  --border-color: rgba(255, 255, 255, 0.08);
+  --border-hover: rgba(255, 255, 255, 0.15);
   --text-primary: #f8fafc;
   --text-secondary: #94a3b8;
   --text-muted: #475569;
   
-  --primary: #4f46e5;
-  --primary-hover: #6366f1;
-  --primary-light: rgba(79, 70, 229, 0.15);
-  --primary-glow: rgba(79, 70, 229, 0.3);
+  --primary: #0ea5e9;
+  --primary-hover: #0284c7;
+  --primary-light: rgba(14, 165, 233, 0.15);
+  --primary-glow: rgba(14, 165, 233, 0.3);
   
-  --accent: #06b6d4;
-  --accent-light: rgba(6, 182, 212, 0.15);
+  --accent: #38bdf8;
+  --accent-light: rgba(56, 189, 248, 0.15);
   
   --success: #10b981;
   --success-light: rgba(16, 185, 129, 0.15);
@@ -146,14 +146,7 @@ p {
   display: flex;
   flex-direction: column;
   min-height: 100vh;
-  margin-left: 280px;
-  transition: margin-left var(--transition-speed) cubic-bezier(0.16, 1, 0.3, 1);
-}
-
-@media (max-width: 991px) {
-  .main-content {
-    margin-left: 0;
-  }
+  width: 100%;
 }
 
 .content-body {
@@ -170,113 +163,7 @@ p {
   }
 }
 
-/* Sidebar Styling - Clean dark design with micro-accent lines */
-.sidebar {
-  width: 280px;
-  background-color: var(--sidebar-bg);
-  border-right: 1px solid var(--border-color);
-  height: 100vh;
-  position: fixed;
-  left: 0;
-  top: 0;
-  display: flex;
-  flex-direction: column;
-  z-index: 1000;
-  transition: transform var(--transition-speed) cubic-bezier(0.16, 1, 0.3, 1),
-              background-color var(--transition-speed) ease,
-              border-color var(--transition-speed) ease;
-}
-
-/* Explicit per-theme sidebar colours - guarantees override */
-[data-theme='light'] .sidebar {
-  background-color: #ffffff;
-  border-right-color: #e2e8f0;
-}
-[data-theme='light'] .sidebar-item a {
-  color: #64748b;
-}
-[data-theme='light'] .sidebar-item a:hover {
-  background-color: rgba(15, 23, 42, 0.05);
-  color: #0f172a;
-}
-[data-theme='light'] .sidebar-brand {
-  border-bottom-color: #e2e8f0;
-  color: #0f172a;
-}
-[data-theme='light'] .sidebar-footer {
-  border-top-color: #e2e8f0;
-}
-[data-theme='dark'] .sidebar {
-  background-color: #030508;
-  border-right-color: rgba(255, 255, 255, 0.04);
-}
-
-@media (max-width: 991px) {
-  .sidebar {
-    transform: translateX(-100%);
-  }
-  .sidebar.open {
-    transform: translateX(0);
-  }
-}
-
-.sidebar-brand {
-  padding: 2rem 1.5rem;
-  display: flex;
-  align-items: center;
-  gap: 0.75rem;
-  font-family: var(--font-display);
-  font-size: 1.4rem;
-  font-weight: 800;
-  letter-spacing: -0.03em;
-  color: var(--sidebar-text);
-  border-bottom: 1px solid var(--border-color);
-}
-
-.sidebar-brand span {
-  background: linear-gradient(135deg, #a5b4fc, #818cf8);
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
-}
-
-.sidebar-menu {
-  list-style: none;
-  padding: 1.5rem 1rem;
-  display: flex;
-  flex-direction: column;
-  gap: 0.35rem;
-  flex: 1;
-  overflow-y: auto;
-}
-
-.sidebar-item a {
-  display: flex;
-  align-items: center;
-  gap: 1rem;
-  padding: 0.85rem 1.25rem;
-  color: var(--sidebar-text-muted);
-  border-radius: var(--border-radius-sm);
-  font-weight: 600;
-  font-size: 0.95rem;
-  transition: all 0.2s ease;
-  position: relative;
-}
-
-.sidebar-item a:hover {
-  background-color: var(--sidebar-hover);
-  color: var(--sidebar-text);
-}
-
-.sidebar-item.active a {
-  background-color: var(--sidebar-active);
-  color: var(--sidebar-text);
-  box-shadow: 0 4px 20px var(--primary-glow);
-}
-
-.sidebar-footer {
-  padding: 1.5rem;
-  border-top: 1px solid var(--border-color);
-}
+/* Sidebar styles removed - Using top navbar */
 
 /* Header - Blurry glass panel */
 .header {
@@ -299,18 +186,79 @@ p {
   width: 100%;
 }
 
-.menu-toggle {
-  display: none;
-  background: none;
-  border: none;
+.desktop-nav {
+  display: flex;
+  align-items: center;
+  gap: 1.5rem;
+  margin-left: 2rem;
+}
+
+.nav-link {
+  color: var(--text-secondary);
+  font-size: 0.95rem;
+  font-weight: 600;
+  padding: 0.5rem 0;
+  position: relative;
+  transition: color 0.2s;
+}
+
+.nav-link:hover, .nav-link.active {
   color: var(--text-primary);
-  cursor: pointer;
+}
+
+.nav-link::after {
+  content: '';
+  position: absolute;
+  bottom: -4px;
+  left: 0;
+  width: 0;
+  height: 2px;
+  background: var(--primary);
+  transition: width 0.3s;
+}
+
+.nav-link.active::after, .nav-link:hover::after {
+  width: 100%;
 }
 
 @media (max-width: 991px) {
-  .menu-toggle {
-    display: block;
+  .desktop-nav {
+    display: none;
   }
+  .mobile-menu-toggle {
+    display: block !important;
+  }
+  .header {
+    padding: 0 1.25rem;
+  }
+}
+
+.mobile-nav {
+  position: absolute;
+  top: 80px;
+  left: 0;
+  width: 100%;
+  background-color: var(--header-bg);
+  backdrop-filter: blur(16px);
+  border-bottom: 1px solid var(--border-color);
+  display: flex;
+  flex-direction: column;
+  padding: 1rem;
+  z-index: 998;
+}
+
+.mobile-nav-link {
+  padding: 1rem;
+  color: var(--text-secondary);
+  font-weight: 600;
+  border-radius: var(--border-radius-sm);
+  transition: background-color 0.2s, color 0.2s;
+  display: block;
+}
+
+.mobile-nav-link:hover, .mobile-nav-link.active {
+  background-color: var(--sidebar-hover);
+  color: var(--primary);
 }
 
 /* Wallet pill with dynamic gradient borders */
@@ -800,6 +748,30 @@ p {
   padding: 4rem 0;
 }
 
+/* Floating Telegram Button */
+.floating-telegram-btn {
+  position: fixed;
+  bottom: 2rem;
+  right: 2rem;
+  width: 60px;
+  height: 60px;
+  background: linear-gradient(135deg, #0088cc, #00a8ff);
+  color: white;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 4px 15px rgba(0, 136, 204, 0.4);
+  z-index: 9999;
+  transition: transform 0.3s ease, box-shadow 0.3s ease;
+  text-decoration: none;
+}
+
+.floating-telegram-btn:hover {
+  transform: translateY(-5px) scale(1.05);
+  box-shadow: 0 8px 25px rgba(0, 136, 204, 0.6);
+  color: white;
+}
 /* Keyframes */
 @keyframes spin {
   to { transform: rotate(360deg); }

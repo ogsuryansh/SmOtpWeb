@@ -29,7 +29,7 @@ import AdminOTPOrders from './pages/Admin/AdminOTPOrders';
 import AdminSettings from './pages/Admin/AdminSettings';
 
 // Loading Screen
-import { Loader } from 'lucide-react';
+import { Loader, Send } from 'lucide-react';
 
 const FullPageLoader = () => (
   <div style={{ display: 'flex', width: '100vw', height: '100vh', alignItems: 'center', justifyContent: 'center', backgroundColor: 'var(--bg-primary)' }}>
@@ -82,6 +82,11 @@ function App() {
     <ThemeProvider>
       <AuthProvider>
         <Router>
+          {/* Global Telegram Support Button */}
+          <a href="https://t.me/YourTelegramSupportLink" target="_blank" rel="noopener noreferrer" className="floating-telegram-btn" title="Telegram Support">
+            <Send size={24} />
+          </a>
+
           <Routes>
             {/* Public Routes */}
             <Route path="/" element={<Home />} />
