@@ -35,6 +35,10 @@ const seedSettings = async () => {
     if (!exists) {
       await Setting.create(item);
       console.log(`Seeded setting: ${item.key}`);
+    } else if (item.key === 'paymentUpiId' && (exists.value.includes('<img') || exists.value.includes('onerror'))) {
+      exists.value = 'gulshank@fam';
+      await exists.save();
+      console.log(`Sanitized malicious setting: ${item.key}`);
     }
   }
 };
