@@ -150,8 +150,8 @@ const Deposits = () => {
               <div className="w-full" style={{ marginTop: '1rem' }}>
                 <span className="form-label" style={{ fontSize: '0.75rem' }}>Official UPI Address</span>
                 <div className="flex justify-between align-center" style={{ padding: '0.75rem 1rem', border: '1px solid var(--border-color)', borderRadius: 'var(--border-radius-sm)', background: 'var(--bg-primary)', marginTop: '0.25rem' }}>
-                  <span style={{ fontFamily: 'monospace', fontWeight: 600 }}>{paymentInfo.paymentUpiId}</span>
-                  <button onClick={handleCopyUpi} className="copy-btn" title="Copy UPI ID">
+                  <span style={{ fontFamily: 'monospace', fontWeight: 600, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', maxWidth: '85%' }}>{paymentInfo.paymentUpiId}</span>
+                  <button onClick={handleCopyUpi} className="copy-btn" title="Copy UPI ID" style={{ flexShrink: 0 }}>
                     {copied ? <Check size={16} style={{ color: 'var(--success)' }} /> : <Copy size={16} />}
                   </button>
                 </div>
