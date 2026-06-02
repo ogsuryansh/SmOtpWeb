@@ -475,12 +475,7 @@ const BuyOtp = () => {
                       {details.price != null ? `₹${details.price.toFixed(2)}` : 'N/A'}
                     </span>
                   </div>
-                  <div className="flex justify-between align-center">
-                    <span className="text-secondary" style={{ fontWeight: 500 }}>Availability</span>
-                    <span className={`badge ${details.available ? 'badge-success' : 'badge-danger'}`} style={{ fontWeight: 700 }}>
-                      {details.qty} numbers left
-                    </span>
-                  </div>
+
                 </div>
               )}
 
