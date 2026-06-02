@@ -13,7 +13,7 @@ const transactionSchema = new mongoose.Schema(
     },
     type: {
       type: String,
-      enum: ['deposit', 'purchase', 'refund', 'bonus', 'penalty'],
+      enum: ['deposit', 'purchase', 'refund', 'bonus', 'penalty', 'admin_adjustment'],
       required: true,
     },
     description: {
