@@ -116,9 +116,7 @@ const Home = () => {
         
         {/* Hero Section */}
         <section className="landing-hero" style={{ padding: '6rem 0 4rem' }}>
-          <div className="badge badge-primary m-b-2" style={{ textTransform: 'none', padding: '0.5rem 1rem', borderRadius: '50px' }}>
-            🚀 Instant verification with SastaOTP API integration
-          </div>
+
           <h1 className="landing-title">
             Secure Virtual Numbers For <b>Verification</b>
           </h1>
@@ -161,8 +159,6 @@ const Home = () => {
                 <MessageCircle size={22} />
               </div>
               <h3 style={{ fontSize: '1.1rem', marginTop: '0.5rem' }}>Telegram</h3>
-              <span className="text-secondary" style={{ fontSize: '0.85rem' }}>Starting at</span>
-              <p style={{ fontWeight: 800, color: 'var(--primary)', fontSize: '1.25rem' }}>₹12.00</p>
             </div>
 
             <div className="card text-center flex flex-column align-center gap-1" style={{ padding: '1.5rem' }}>
@@ -170,8 +166,6 @@ const Home = () => {
                 <MessageCircle size={22} />
               </div>
               <h3 style={{ fontSize: '1.1rem', marginTop: '0.5rem' }}>WhatsApp</h3>
-              <span className="text-secondary" style={{ fontSize: '0.85rem' }}>Starting at</span>
-              <p style={{ fontWeight: 800, color: 'var(--primary)', fontSize: '1.25rem' }}>₹15.00</p>
             </div>
 
             <div className="card text-center flex flex-column align-center gap-1" style={{ padding: '1.5rem' }}>
@@ -179,8 +173,6 @@ const Home = () => {
                 <Lock size={22} />
               </div>
               <h3 style={{ fontSize: '1.1rem', marginTop: '0.5rem' }}>Google / YouTube</h3>
-              <span className="text-secondary" style={{ fontSize: '0.85rem' }}>Starting at</span>
-              <p style={{ fontWeight: 800, color: 'var(--primary)', fontSize: '1.25rem' }}>₹8.00</p>
             </div>
 
             <div className="card text-center flex flex-column align-center gap-1" style={{ padding: '1.5rem' }}>
@@ -188,8 +180,6 @@ const Home = () => {
                 <Cpu size={22} />
               </div>
               <h3 style={{ fontSize: '1.1rem', marginTop: '0.5rem' }}>OpenAI / ChatGPT</h3>
-              <span className="text-secondary" style={{ fontSize: '0.85rem' }}>Starting at</span>
-              <p style={{ fontWeight: 800, color: 'var(--primary)', fontSize: '1.25rem' }}>₹5.00</p>
             </div>
 
           </div>
@@ -329,7 +319,7 @@ const Home = () => {
           </div>
         </div>
         <div style={{ maxWidth: '1200px', margin: '2rem auto 0', paddingTop: '1.5rem', borderTop: '1px solid var(--border-color)', textAlign: 'center', fontSize: '0.8rem' }}>
-          <p>&copy; {new Date().getFullYear()} OTPAddaa. All rights reserved. Powered by SastaOTP API integration.</p>
+          <p>&copy; {new Date().getFullYear()} OTPAddaa. All rights reserved.</p>
         </div>
       </footer>
 
