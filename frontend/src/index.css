@@ -236,6 +236,9 @@ p {
   .mobile-menu-toggle {
     display: block !important;
   }
+  .hide-mobile {
+    display: none !important;
+  }
   .header {
     padding: 0 1.25rem;
   }

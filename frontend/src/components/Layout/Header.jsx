@@ -67,12 +67,7 @@ const Header = () => {
           </nav>
         </div>
 
-        <div className="header-right" style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
-          {/* Mobile menu toggle */}
-          <button className="mobile-menu-toggle" onClick={toggleMobileMenu}>
-            {mobileMenuOpen ? <X size={24} /> : <Menu size={24} />}
-          </button>
-
+        <div className="header-right flex align-center" style={{ gap: '0.75rem' }}>
           {/* Wallet pill */}
           {user && (
             <div className="wallet-pill" onClick={() => navigate('/deposits')} style={{ cursor: 'pointer', backgroundColor: 'var(--primary)', color: '#fff', border: 'none' }}>
@@ -82,13 +77,13 @@ const Header = () => {
           )}
 
           {/* Theme toggler */}
-          <button className="theme-toggle-btn" onClick={toggleTheme} aria-label="Toggle Theme">
+          <button className="theme-toggle-btn hide-mobile" onClick={toggleTheme} aria-label="Toggle Theme">
             {theme === 'dark' ? <Sun size={20} /> : <Moon size={20} />}
           </button>
 
           {/* User profile / Logout */}
           {user && (
-            <div className="user-actions" style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+            <div className="user-actions flex align-center hide-mobile" style={{ gap: '0.5rem' }}>
               <div className="user-badge" style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', background: 'var(--bg-secondary)', padding: '0.4rem 0.8rem', borderRadius: '50px', border: '1px solid var(--border-color)' }}>
                  <User size={16} className="text-secondary" />
                  <span style={{ fontSize: '0.85rem', fontWeight: 600 }}>{user.username}</span>
@@ -103,6 +98,11 @@ const Header = () => {
               </button>
             </div>
           )}
+
+          {/* Mobile menu toggle */}
+          <button className="mobile-menu-toggle" onClick={toggleMobileMenu}>
+            {mobileMenuOpen ? <X size={24} /> : <Menu size={24} />}
+          </button>
         </div>
       </div>
 
@@ -119,6 +119,23 @@ const Header = () => {
                {link.name}
              </Link>
           ))}
+          {/* Extra options for mobile */}
+          <button 
+            className="mobile-nav-link" 
+            style={{ background: 'none', border: 'none', width: '100%', textAlign: 'left', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '0.5rem' }} 
+            onClick={toggleTheme}
+          >
+            {theme === 'dark' ? <Sun size={18} /> : <Moon size={18} />} Toggle Theme
+          </button>
+          {user && (
+            <button 
+              className="mobile-nav-link" 
+              style={{ background: 'none', border: 'none', width: '100%', textAlign: 'left', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '0.5rem', color: 'var(--danger)' }} 
+              onClick={handleLogout}
+            >
+              <LogOut size={18} /> Logout
+            </button>
+          )}
         </div>
       )}
     </header>
