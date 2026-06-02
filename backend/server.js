@@ -25,7 +25,13 @@ connectDB();
 const app = express();
 
 // Middlewares
-const allowedOrigins = ['http://localhost:5173', 'http://127.0.0.1:5173'];
+const allowedOrigins = [
+  'http://localhost:5173', 
+  'http://127.0.0.1:5173',
+  'https://otpaddaa.shop',
+  'https://www.otpaddaa.shop',
+  'https://sm-otp-web.vercel.app'
+];
 if (process.env.FRONTEND_URL) {
   const cleanOrigin = process.env.FRONTEND_URL.replace(/\/$/, '');
   allowedOrigins.push(cleanOrigin);
