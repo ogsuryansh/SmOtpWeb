@@ -19,16 +19,27 @@ const Header = () => {
   const toggleMobileMenu = () => setMobileMenuOpen(!mobileMenuOpen);
   const closeMobileMenu = () => setMobileMenuOpen(false);
 
-  const navLinks = [
-    { name: 'Dashboard', path: '/dashboard' },
-    { name: 'Buy OTP', path: '/buy' },
-    { name: 'History', path: '/history' },
-    { name: 'Deposits', path: '/deposits' },
-    { name: 'Profile', path: '/profile' },
-  ];
-
-  if (user && user.role === 'admin') {
-    navLinks.push({ name: 'Admin Panel', path: '/admin' });
+  let navLinks = [];
+  if (location.pathname.startsWith('/admin')) {
+    navLinks = [
+      { name: 'Admin Dashboard', path: '/admin' },
+      { name: 'Users', path: '/admin/users' },
+      { name: 'Deposits', path: '/admin/deposits' },
+      { name: 'Orders', path: '/admin/orders' },
+      { name: 'Settings', path: '/admin/settings' },
+      { name: 'User Dashboard', path: '/dashboard' },
+    ];
+  } else {
+    navLinks = [
+      { name: 'Dashboard', path: '/dashboard' },
+      { name: 'Buy OTP', path: '/buy' },
+      { name: 'History', path: '/history' },
+      { name: 'Deposits', path: '/deposits' },
+      { name: 'Profile', path: '/profile' },
+    ];
+    if (user && user.role === 'admin') {
+      navLinks.push({ name: 'Admin Panel', path: '/admin' });
+    }
   }
 
   return (
@@ -58,7 +69,7 @@ const Header = () => {
 
         <div className="header-right" style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
           {/* Mobile menu toggle */}
-          <button className="mobile-menu-toggle" onClick={toggleMobileMenu} style={{ background: 'none', border: 'none', color: 'var(--text-primary)', cursor: 'pointer' }}>
+          <button className="mobile-menu-toggle" onClick={toggleMobileMenu}>
             {mobileMenuOpen ? <X size={24} /> : <Menu size={24} />}
           </button>
 

@@ -221,6 +221,14 @@ p {
   width: 100%;
 }
 
+.mobile-menu-toggle {
+  display: none;
+  background: none;
+  border: none;
+  color: var(--text-primary);
+  cursor: pointer;
+}
+
 @media (max-width: 991px) {
   .desktop-nav {
     display: none;
