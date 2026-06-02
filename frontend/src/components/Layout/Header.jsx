@@ -46,7 +46,12 @@ const Header = () => {
     <header className="header">
       <div className="header-container">
         
-        <div className="header-left" style={{ display: 'flex', alignItems: 'center', gap: '2rem' }}>
+        <div className="header-left" style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
+          {/* Mobile menu toggle */}
+          <button className={`mobile-menu-toggle ${mobileMenuOpen ? 'is-active' : ''}`} onClick={toggleMobileMenu}>
+            {mobileMenuOpen ? <X size={24} /> : <Menu size={24} />}
+          </button>
+
           {/* Logo */}
           <Link to="/" className="navbar-brand" style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', color: 'var(--text-primary)', fontWeight: '800', fontSize: '1.4rem' }}>
              <Smartphone size={24} style={{ color: 'var(--primary)' }} />
@@ -98,49 +103,49 @@ const Header = () => {
               </button>
             </div>
           )}
-
-          {/* Mobile menu toggle */}
-          <button className="mobile-menu-toggle" onClick={toggleMobileMenu}>
-            {mobileMenuOpen ? <X size={24} /> : <Menu size={24} />}
-          </button>
         </div>
       </div>
 
       {/* Mobile Nav Overlay */}
-      {mobileMenuOpen && (
-        <div className="mobile-nav">
-          {navLinks.map((link) => (
-             <Link 
-               key={link.path} 
-               to={link.path} 
-               className={`mobile-nav-link ${location.pathname === link.path ? 'active' : ''}`}
-               onClick={closeMobileMenu}
-             >
-               {link.name}
-             </Link>
-          ))}
-          {/* Extra options for mobile */}
+      <div className={`mobile-overlay ${mobileMenuOpen ? 'open' : ''}`} onClick={closeMobileMenu}></div>
+      <div className={`mobile-nav ${mobileMenuOpen ? 'open' : ''}`}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', padding: '0 1rem 1.5rem 1rem', marginBottom: '1rem', borderBottom: '1px solid var(--border-color)' }}>
+             <Smartphone size={24} style={{ color: 'var(--primary)' }} />
+             <span style={{ fontWeight: '800', fontSize: '1.4rem' }}>OTP<span style={{ color: 'var(--primary)' }}>Addaa</span></span>
+        </div>
+        
+        {navLinks.map((link) => (
+           <Link 
+             key={link.path} 
+             to={link.path} 
+             className={`mobile-nav-link ${location.pathname === link.path ? 'active' : ''}`}
+             onClick={closeMobileMenu}
+           >
+             {link.name}
+           </Link>
+        ))}
+        {/* Extra options for mobile */}
+        <button 
+          className="mobile-nav-link" 
+          style={{ background: 'none', border: 'none', width: '100%', textAlign: 'left', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '0.5rem', marginTop: 'auto' }} 
+          onClick={toggleTheme}
+        >
+          {theme === 'dark' ? <Sun size={18} /> : <Moon size={18} />} Toggle Theme
+        </button>
+        {user && (
           <button 
             className="mobile-nav-link" 
-            style={{ background: 'none', border: 'none', width: '100%', textAlign: 'left', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '0.5rem' }} 
-            onClick={toggleTheme}
+            style={{ background: 'none', border: 'none', width: '100%', textAlign: 'left', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '0.5rem', color: 'var(--danger)' }} 
+            onClick={handleLogout}
           >
-            {theme === 'dark' ? <Sun size={18} /> : <Moon size={18} />} Toggle Theme
+            <LogOut size={18} /> Logout
           </button>
-          {user && (
-            <button 
-              className="mobile-nav-link" 
-              style={{ background: 'none', border: 'none', width: '100%', textAlign: 'left', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '0.5rem', color: 'var(--danger)' }} 
-              onClick={handleLogout}
-            >
-              <LogOut size={18} /> Logout
-            </button>
-          )}
-        </div>
-      )}
+        )}
+      </div>
     </header>
   );
 };
 
 export default Header;
+
 
