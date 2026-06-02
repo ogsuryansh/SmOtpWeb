@@ -2,6 +2,7 @@ import crypto from 'crypto';
 import jwt from 'jsonwebtoken';
 import User from '../models/User.js';
 import AuditLog from '../models/AuditLog.js';
+import { OAuth2Client } from 'google-auth-library';
 
 // Generate JWT Token
 const generateToken = (id) => {
@@ -123,6 +124,82 @@ export const loginUser = async (req, res, next) => {
         balance: user.balance,
       },
     });
+  } catch (error) {
+    next(error);
+  }
+};
+
+// @desc    Auth user via Google
+// @route   POST /api/auth/google
+// @access  Public
+export const googleLogin = async (req, res, next) => {
+  try {
+    const { credential } = req.body;
+    if (!credential) {
+      res.status(400);
+      throw new Error('No Google credential provided');
+    }
+
+    const client = new OAuth2Client(process.env.GOOGLE_CLIENT_ID);
+    const ticket = await client.verifyIdToken({
+      idToken: credential,
+      audience: process.env.GOOGLE_CLIENT_ID,
+    });
+    
+    const payload = ticket.getPayload();
+    if (!payload || !payload.email) {
+      res.status(400);
+      throw new Error('Invalid Google credential payload');
+    }
+
+    const { email, name, sub } = payload;
+    let user = await User.findOne({ email });
+
+    if (!user) {
+      const randomPassword = crypto.randomBytes(16).toString('hex');
+      let username = name ? name.toLowerCase().replace(/\s/g, '') : `user_${sub.substring(0, 5)}`;
+      
+      let usernameExists = await User.findOne({ username });
+      if (usernameExists) {
+        username = `${username}_${crypto.randomBytes(2).toString('hex')}`;
+      }
+
+      user = await User.create({
+        username,
+        email,
+        password: randomPassword,
+      });
+
+      await AuditLog.create({
+        action: 'USER_REGISTER_GOOGLE',
+        details: { email: user.email, username: user.username },
+        userId: user._id,
+      });
+    }
+
+    if (user.isBanned) {
+      res.status(403);
+      throw new Error('Your account has been banned. Please contact support.');
+    }
+
+    await AuditLog.create({
+      action: 'USER_LOGIN_GOOGLE',
+      details: { ip: req.ip || '' },
+      userId: user._id,
+    });
+
+    return res.status(200).json({
+      success: true,
+      token: generateToken(user._id),
+      user: {
+        id: user._id,
+        username: user.username,
+        email: user.email,
+        role: user.role,
+        balance: user.balance,
+      },
+    });
+
   } catch (error) {
     next(error);
   }

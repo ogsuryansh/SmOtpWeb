@@ -47,6 +47,7 @@ export const api = {
   // Auth API
   auth: {
     login: (credentials) => request('/auth/login', { method: 'POST', body: credentials }),
+    googleLogin: (credential) => request('/auth/google', { method: 'POST', body: { credential } }),
     register: (userData) => request('/auth/register', { method: 'POST', body: userData }),
     getMe: () => request('/auth/me'),
     forgotPassword: (email) => request('/auth/forgot-password', { method: 'POST', body: { email } }),

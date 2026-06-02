@@ -57,6 +57,24 @@ export const AuthProvider = ({ children }) => {
     }
   };
 
+  // Google Login handler
+  const googleLogin = async (credential) => {
+    setError(null);
+    try {
+      const res = await api.auth.googleLogin(credential);
+      if (res.success && res.token) {
+        localStorage.setItem('token', res.token);
+        setUser(res.user);
+        return res.user;
+      } else {
+        throw new Error(res.message || 'Google Login failed');
+      }
+    } catch (err) {
+      setError(err.message);
+      throw err;
+    }
+  };
+
   // Register handler
   const register = async (username, email, password) => {
     setError(null);
@@ -88,6 +106,7 @@ export const AuthProvider = ({ children }) => {
         loading,
         error,
         login,
+        googleLogin,
         register,
         logout,
         refreshUser,
