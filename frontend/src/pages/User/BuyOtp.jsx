@@ -247,30 +247,32 @@ const BuyOtp = () => {
 
   // ── Build country options FROM selected service's countries array ──────────
   // This ensures country_code values match what the buy API / price lookup needs
-  const serviceCountries = rawServices[selectedService]?.countries || [];
-  const countryOptions = serviceCountries.map(c => {
-    const code = String(c.country_code || c.code || '');
-    const name = c.country_name || c.name || c.eng || code;
-    
-    // 1. Try name-based mapping
-    const cleanName = name.trim().toLowerCase();
-    const mappedByName = COUNTRY_NAME_TO_INFO[cleanName];
+  const countryOptions = React.useMemo(() => {
+    const serviceCountries = rawServices[selectedService]?.countries || [];
+    return serviceCountries.map(c => {
+      const code = String(c.country_code || c.code || '');
+      const name = c.country_name || c.name || c.eng || code;
+      
+      // 1. Try name-based mapping
+      const cleanName = name.trim().toLowerCase();
+      const mappedByName = COUNTRY_NAME_TO_INFO[cleanName];
 
-    // 2. Try ID-based fallback mapping
-    const mappedById = SMS_ACTIVATE_FALLBACKS[code];
+      // 2. Try ID-based fallback mapping
+      const mappedById = SMS_ACTIVATE_FALLBACKS[code];
 
-    const dialCode = mappedByName ? mappedByName.dialCode : (mappedById ? mappedById.dialCode : code);
-    const flag = mappedByName ? mappedByName.flag : (mappedById ? mappedById.flag : (toFlagEmoji(c.flag) || '🌐'));
+      const dialCode = mappedByName ? mappedByName.dialCode : (mappedById ? mappedById.dialCode : code);
+      const flag = mappedByName ? mappedByName.flag : (mappedById ? mappedById.flag : (toFlagEmoji(c.flag) || '🌐'));
 
-    return {
-      value: code,
-      label: name,
-      subLabel: `+${dialCode}`,
-      icon: flag,
-      qty: c.qty ?? null,
-      price: c.price ?? null,
-    };
-  });
+      return {
+        value: code,
+        label: name,
+        subLabel: `+${dialCode}`,
+        icon: flag,
+        qty: c.qty ?? null,
+        price: c.price ?? null,
+      };
+    });
+  }, [rawServices, selectedService]);
 
   // Sort countryOptions based on sortBy state
   const sortedCountryOptions = React.useMemo(() => {
@@ -292,19 +294,22 @@ const BuyOtp = () => {
     return list; // Default (India first / alphabetical as returned by backend)
   }, [countryOptions, sortBy]);
 
-  // Auto-select first available country when service or countries change or sort mode changes
+  // Auto-select first available country when selection is invalid
   useEffect(() => {
     if (sortedCountryOptions.length === 0) return;
     
-    if (sortBy === 'cheap-first' || sortBy === 'expensive-first') {
-      // Auto-select the first item in the sorted list (lowest or highest price)
-      setSelectedCountry(sortedCountryOptions[0].value);
-    } else {
-      // Default: check if India exists, otherwise select the first item
-      const hasIndia = sortedCountryOptions.find(o => o.value === '22' || o.label.toLowerCase() === 'india');
-      setSelectedCountry(hasIndia ? hasIndia.value : sortedCountryOptions[0].value);
+    const isCurrentValid = sortedCountryOptions.some(o => o.value === selectedCountry);
+    if (!isCurrentValid) {
+      if (sortBy === 'cheap-first' || sortBy === 'expensive-first') {
+        // Auto-select the first item in the sorted list
+        setSelectedCountry(sortedCountryOptions[0].value);
+      } else {
+        // Default: check if India exists, otherwise select the first item
+        const hasIndia = sortedCountryOptions.find(o => o.value === '22' || o.label.toLowerCase() === 'india');
+        setSelectedCountry(hasIndia ? hasIndia.value : sortedCountryOptions[0].value);
+      }
     }
-  }, [selectedService, sortedCountryOptions, sortBy]);
+  }, [sortedCountryOptions, selectedCountry, sortBy]);
 
   // ── Price / availability lookup ───────────────────────────────────────────
   const details = useCallback(() => {
