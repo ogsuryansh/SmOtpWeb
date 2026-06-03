@@ -229,6 +229,12 @@ const AdminDashboard = () => {
           {/* Secondary Sub-metrics */}
           <div className="stat-grid-sub">
             <div className="premium-card" style={{ padding: '1.2rem' }}>
+              <div className="stat-label" style={{ fontSize: '0.8rem' }}>Panel API Balance</div>
+              <div className="stat-value" style={{ fontSize: '1.8rem', color: '#10b981' }}>
+                ₹{stats?.apiBalance !== undefined ? stats.apiBalance.toFixed(2) : '0.00'}
+              </div>
+            </div>
+            <div className="premium-card" style={{ padding: '1.2rem' }}>
               <div className="stat-label" style={{ fontSize: '0.8rem' }}>Today's OTP Count</div>
               <div className="stat-value" style={{ fontSize: '1.8rem' }}>{stats?.ordersToday}</div>
             </div>

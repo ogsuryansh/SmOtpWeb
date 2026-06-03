@@ -4,6 +4,7 @@ import OTPOrder from '../models/OTPOrder.js';
 import Transaction from '../models/Transaction.js';
 import Setting from '../models/Setting.js';
 import AuditLog from '../models/AuditLog.js';
+import { sastaOtpService } from '../services/sastaOtpService.js';
 
 // @desc    Get Admin Panel dashboard statistics
 // @route   GET /api/admin/stats
@@ -34,6 +35,10 @@ export const getStats = async (req, res, next) => {
     today.setHours(0, 0, 0, 0);
     const ordersToday = await OTPOrder.countDocuments({ createdAt: { $gte: today } });
 
+    // API Balance
+    const apiBalanceInfo = await sastaOtpService.getBalance();
+    const apiBalance = apiBalanceInfo && !apiBalanceInfo.error ? apiBalanceInfo.balance : 0;
+
     // Completed, pending, and failed orders overall
     const completedOrdersCount = await OTPOrder.countDocuments({ status: 'completed' });
     const pendingOrdersCount = await OTPOrder.countDocuments({ status: 'pending' });
@@ -55,6 +60,7 @@ export const getStats = async (req, res, next) => {
         totalRevenue: totalRevenueVal,
         totalSales,
         ordersToday,
+        apiBalance,
         ordersCount: {
           completed: completedOrdersCount,
           pending: pendingOrdersCount,
