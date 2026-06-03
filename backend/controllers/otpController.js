@@ -336,10 +336,20 @@ export const updateOrderStatus = async (req, res, next) => {
         throw new Error(`Cannot cancel order. Current status: ${order.status}`);
       }
 
+      // Enforce 2-minute wait before manual cancellation
+      const twoMinutesInMs = 2 * 60 * 1000;
+      const timeElapsed = Date.now() - new Date(order.createdAt).getTime();
+      if (timeElapsed < twoMinutesInMs) {
+        res.status(400);
+        const remainingSeconds = Math.ceil((twoMinutesInMs - timeElapsed) / 1000);
+        throw new Error(`Please wait ${remainingSeconds} seconds before cancelling this number.`);
+      }
+
       // Tell SastaOTP to cancel (status = -1)
       const resText = await sastaOtpService.setStatus(order.activationId, -1);
 
-      if (resText === 'ACCESS_CANCEL' || resText.includes('CANCEL')) {
+      // We strictly check for 'ACCESS_CANCEL' because 'EARLY_CANCEL_DENIED' contains 'CANCEL'
+      if (resText === 'ACCESS_CANCEL') {
         const updatedOrder = await OTPOrder.findOneAndUpdate(
           { _id: order._id, status: 'pending' },
           { status: 'cancelled' },
