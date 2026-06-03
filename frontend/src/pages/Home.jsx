@@ -523,7 +523,6 @@ const Home = () => {
               </div>
               
               <div className="check-list">
-                <div className="check-item"><CheckCircle2 size={16} className="check-item-icon" /> No registration required</div>
                 <div className="check-item"><CheckCircle2 size={16} className="check-item-icon" /> Instant activation</div>
                 <div className="check-item"><CheckCircle2 size={16} className="check-item-icon" /> Secure & anonymous</div>
               </div>
@@ -747,7 +746,7 @@ const Home = () => {
               {[
                 { icon: Shield, title: 'Bank-Level Security', desc: 'Your data is protected with 256-bit SSL encryption, the same security used by major banks.' },
                 { icon: Lock, title: 'No Data Storage', desc: 'We never store your personal information. Numbers are temporary and completely anonymous.' },
-                { icon: Eye, title: 'Privacy First', desc: 'No registration required for basic use. Your identity stays completely private.' },
+                { icon: Eye, title: 'Privacy First', desc: 'Your identity stays completely private.' },
                 { icon: Fingerprint, title: 'Anonymous Payments', desc: 'Support for cryptocurrency payments for complete anonymity.' },
                 { icon: Server, title: '99.9% Uptime', desc: 'Our infrastructure is built for reliability with multiple redundancy layers.' },
                 { icon: CheckCircle2, title: 'Verified Provider', desc: 'Trusted by over 50,000 users worldwide with excellent reviews.' },

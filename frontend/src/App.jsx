@@ -83,7 +83,7 @@ function App() {
       <AuthProvider>
         <Router>
           {/* Global Telegram Support Button */}
-          <a href="https://t.me/YourTelegramSupportLink" target="_blank" rel="noopener noreferrer" className="floating-telegram-btn" title="Telegram Support">
+          <a href="https://t.me/OTPAddaa_Support" target="_blank" rel="noopener noreferrer" className="floating-telegram-btn" title="Telegram Support">
             <Send size={24} />
           </a>
 

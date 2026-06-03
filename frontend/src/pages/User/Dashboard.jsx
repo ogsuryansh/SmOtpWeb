@@ -180,7 +180,7 @@ const Dashboard = () => {
           <h1 style={{ fontSize: '2rem', fontWeight: 800, fontFamily: 'var(--font-display)' }}>
             Welcome, {user?.username} 👋
           </h1>
-          <p className="text-secondary">Track your virtual OTP allocations and financial balance</p>
+          <p className="text-secondary">Manage your active numbers and monitor your wallet balance.</p>
         </div>
         <Link to="/buy" className="btn btn-primary btn-lg">
           <Smartphone size={18} />

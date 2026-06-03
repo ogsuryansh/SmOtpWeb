@@ -173,7 +173,7 @@ const Profile = () => {
 
         {/* Quick Information */}
         <div className="card flex flex-column gap-2" style={{ justifyContent: 'center' }}>
-          <h2 className="card-title">Wallet Snapshot</h2>
+          <h2 className="card-title">Wallet Overview</h2>
           <div className="flex justify-between align-center" style={{ borderBottom: '1px solid var(--border-color)', paddingBottom: '1rem' }}>
             <span className="text-secondary" style={{ fontWeight: 500 }}>Current Balance</span>
             <span style={{ fontSize: '1.5rem', fontWeight: 800, fontFamily: 'var(--font-display)', color: 'var(--primary)' }}>

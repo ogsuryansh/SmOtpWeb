@@ -84,13 +84,9 @@ const Deposits = () => {
       return;
     }
 
-    const formData = new FormData();
-    formData.append('amount', amount);
-    formData.append('utr', utr.trim());
-
     try {
       setIsSubmitting(true);
-      const res = await api.deposits.submit(formData);
+      const res = await api.deposits.submit({ amount, utr: utr.trim() });
       if (res.success) {
         setSuccess('Deposit request submitted successfully. Admin will review it shortly.');
         setAmount('');
