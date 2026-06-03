@@ -51,6 +51,10 @@ const otpOrderSchema = new mongoose.Schema(
     smsCode: {
       type: String,
     },
+    hasReceivedOtp: {
+      type: Boolean,
+      default: false,
+    },
     smsText: {
       type: String,
     },

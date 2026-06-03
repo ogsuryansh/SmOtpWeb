@@ -202,9 +202,14 @@ export const pollOrder = async (req, res, next) => {
 
     // Check if local expiration is reached
     if (new Date() > order.expiresAt) {
-      // Update local state to expired
-      order.status = 'expired';
-      await order.save();
+      // Update local state to expired atomically
+      const updatedOrder = await OTPOrder.findOneAndUpdate(
+        { _id: order._id, status: 'pending' },
+        { status: 'expired' },
+        { new: true }
+      );
+
+      if (!updatedOrder) return res.status(200).json({ success: true, order }); // already processed
 
       // Attempt to tell provider
       try {
@@ -213,23 +218,25 @@ export const pollOrder = async (req, res, next) => {
         console.warn('Could not cancel on provider side:', err.message);
       }
 
-      // Refund user
-      await User.findByIdAndUpdate(order.userId, { $inc: { balance: order.price } });
-      await Transaction.create({
-        userId: order.userId,
-        amount: order.price,
-        type: 'refund',
-        description: `Refund for expired number ${order.phoneNumber} (${order.service})`,
-        referenceId: order._id,
-      });
+      // Refund user only if no OTP was ever received
+      if (!updatedOrder.hasReceivedOtp) {
+        await User.findByIdAndUpdate(updatedOrder.userId, { $inc: { balance: updatedOrder.price } });
+        await Transaction.create({
+          userId: updatedOrder.userId,
+          amount: updatedOrder.price,
+          type: 'refund',
+          description: `Refund for expired number ${updatedOrder.phoneNumber} (${updatedOrder.service})`,
+          referenceId: updatedOrder._id,
+        });
 
-      await AuditLog.create({
-        action: 'OTP_ORDER_EXPIRED',
-        details: { orderId: order._id, refundAmount: order.price },
-        userId: order.userId,
-      });
+        await AuditLog.create({
+          action: 'OTP_ORDER_EXPIRED',
+          details: { orderId: updatedOrder._id, refundAmount: updatedOrder.price },
+          userId: updatedOrder.userId,
+        });
+      }
 
-      return res.status(200).json({ success: true, order });
+      return res.status(200).json({ success: true, order: updatedOrder });
     }
 
     // Call SastaOTP getStatus
@@ -237,43 +244,62 @@ export const pollOrder = async (req, res, next) => {
 
     if (statusData.sms && statusData.sms.code) {
       // OTP Received!
-      order.status = 'completed';
-      order.smsCode = statusData.sms.code;
-      order.smsText = statusData.sms.text;
-      await order.save();
+      const updatedOrder = await OTPOrder.findOneAndUpdate(
+        { _id: order._id, status: 'pending' },
+        { 
+          status: 'completed', 
+          smsCode: statusData.sms.code, 
+          smsText: statusData.sms.text,
+          hasReceivedOtp: true 
+        },
+        { new: true }
+      );
+      
+      if (!updatedOrder) return res.status(200).json({ success: true, order });
 
       // Inform provider that SMS was received
       try {
-        await sastaOtpService.setStatus(order.activationId, 6);
+        await sastaOtpService.setStatus(updatedOrder.activationId, 6);
       } catch (err) {
         console.warn('Failed setting status=6 on provider:', err.message);
       }
 
       await AuditLog.create({
         action: 'OTP_RECEIVED',
-        details: { orderId: order._id, code: order.smsCode },
-        userId: order.userId,
+        details: { orderId: updatedOrder._id, code: updatedOrder.smsCode },
+        userId: updatedOrder.userId,
       });
+      
+      return res.status(200).json({ success: true, order: updatedOrder });
     } else if (statusData.status === 'STATUS_CANCEL') {
       // Cancelled by provider or user
-      order.status = 'cancelled';
-      await order.save();
+      const updatedOrder = await OTPOrder.findOneAndUpdate(
+        { _id: order._id, status: 'pending' },
+        { status: 'cancelled' },
+        { new: true }
+      );
 
-      // Refund user
-      await User.findByIdAndUpdate(order.userId, { $inc: { balance: order.price } });
-      await Transaction.create({
-        userId: order.userId,
-        amount: order.price,
-        type: 'refund',
-        description: `Refund for cancelled activation ${order.phoneNumber}`,
-        referenceId: order._id,
-      });
+      if (!updatedOrder) return res.status(200).json({ success: true, order });
 
-      await AuditLog.create({
-        action: 'OTP_ORDER_CANCELLED_PROVIDER',
-        details: { orderId: order._id, refundAmount: order.price },
-        userId: order.userId,
-      });
+      // Refund user if no OTP was received
+      if (!updatedOrder.hasReceivedOtp) {
+        await User.findByIdAndUpdate(updatedOrder.userId, { $inc: { balance: updatedOrder.price } });
+        await Transaction.create({
+          userId: updatedOrder.userId,
+          amount: updatedOrder.price,
+          type: 'refund',
+          description: `Refund for cancelled activation ${updatedOrder.phoneNumber}`,
+          referenceId: updatedOrder._id,
+        });
+
+        await AuditLog.create({
+          action: 'OTP_ORDER_CANCELLED_PROVIDER',
+          details: { orderId: updatedOrder._id, refundAmount: updatedOrder.price },
+          userId: updatedOrder.userId,
+        });
+      }
+      
+      return res.status(200).json({ success: true, order: updatedOrder });
     }
 
     return res.status(200).json({
@@ -314,29 +340,44 @@ export const updateOrderStatus = async (req, res, next) => {
       const resText = await sastaOtpService.setStatus(order.activationId, -1);
 
       if (resText === 'ACCESS_CANCEL' || resText.includes('CANCEL')) {
-        order.status = 'cancelled';
-        await order.save();
+        const updatedOrder = await OTPOrder.findOneAndUpdate(
+          { _id: order._id, status: 'pending' },
+          { status: 'cancelled' },
+          { new: true }
+        );
 
-        // Refund user
-        await User.findByIdAndUpdate(order.userId, { $inc: { balance: order.price } });
-        await Transaction.create({
-          userId: order.userId,
-          amount: order.price,
-          type: 'refund',
-          description: `Refund for cancelled activation ${order.phoneNumber}`,
-          referenceId: order._id,
-        });
+        if (!updatedOrder) {
+          return res.status(200).json({ success: true, message: 'Order already processed', order });
+        }
 
-        await AuditLog.create({
-          action: 'OTP_ORDER_CANCELLED_USER',
-          details: { orderId: order._id, refundAmount: order.price },
-          userId: order.userId,
-        });
+        // Refund user if no OTP was ever received
+        if (!updatedOrder.hasReceivedOtp) {
+          await User.findByIdAndUpdate(updatedOrder.userId, { $inc: { balance: updatedOrder.price } });
+          await Transaction.create({
+            userId: updatedOrder.userId,
+            amount: updatedOrder.price,
+            type: 'refund',
+            description: `Refund for cancelled activation ${updatedOrder.phoneNumber}`,
+            referenceId: updatedOrder._id,
+          });
+
+          await AuditLog.create({
+            action: 'OTP_ORDER_CANCELLED_USER',
+            details: { orderId: updatedOrder._id, refundAmount: updatedOrder.price },
+            userId: updatedOrder.userId,
+          });
+          
+          return res.status(200).json({
+            success: true,
+            message: 'Order cancelled and funds refunded successfully',
+            order: updatedOrder,
+          });
+        }
 
         return res.status(200).json({
           success: true,
-          message: 'Order cancelled and funds refunded successfully',
-          order,
+          message: 'Order cancelled. No refund given as an OTP was already received for this number.',
+          order: updatedOrder,
         });
       } else {
         res.status(400);
