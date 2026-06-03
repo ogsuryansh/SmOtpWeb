@@ -31,6 +31,34 @@ const SMS_ACTIVATE_FALLBACKS = {
   '91': { dialCode: '670', flag: '🇹🇱' }
 };
 
+// ── Common Service Names Mapping ──────────────────────────────────────────────
+const SERVICE_NAMES = {
+  tg: 'Telegram',
+  wa: 'WhatsApp',
+  go: 'Google / Gmail',
+  ig: 'Instagram',
+  fb: 'Facebook',
+  tw: 'Twitter / X',
+  nf: 'Netflix',
+  az: 'Amazon',
+  tk: 'TikTok',
+  ds: 'Discord',
+  ub: 'Uber',
+  tb: 'Taobao',
+  vk: 'VKontakte',
+  mm: 'WeChat',
+  lf: 'Line',
+  vi: 'Viber',
+  sn: 'Snapchat',
+  ok: 'Odnoklassniki',
+  yl: 'Yandex',
+  mb: 'Yahoo',
+  we: 'Weibo',
+  qq: 'QQ',
+  bl: 'Bigo Live',
+  dr: 'Tinder',
+};
+
 // ── Searchable Dropdown ───────────────────────────────────────────────────────
 const SearchableDropdown = ({ id, options, value, onChange, placeholder, icon: Icon, renderLabel }) => {
   const [isOpen, setIsOpen] = useState(false);
@@ -40,8 +68,8 @@ const SearchableDropdown = ({ id, options, value, onChange, placeholder, icon: I
 
   const selected = options.find(o => o.value === value);
   const filtered = options.filter(o =>
-    o.label.toLowerCase().includes(search.toLowerCase()) ||
-    (o.subLabel && o.subLabel.toLowerCase().includes(search.toLowerCase()))
+    String(o.label || '').toLowerCase().includes(search.toLowerCase()) ||
+    (o.subLabel && String(o.subLabel).toLowerCase().includes(search.toLowerCase()))
   );
 
   useEffect(() => {
@@ -213,7 +241,7 @@ const BuyOtp = () => {
   // ── Build service options ─────────────────────────────────────────────────
   const serviceOptions = Object.entries(rawServices).map(([code, srv]) => ({
     value: code,
-    label: typeof srv === 'object' ? (srv.name || code) : code,
+    label: typeof srv === 'object' && srv.name ? srv.name : (SERVICE_NAMES[code.toLowerCase()] || code),
     subLabel: code.toUpperCase(),
   }));
 
