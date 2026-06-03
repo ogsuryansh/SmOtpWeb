@@ -23,6 +23,7 @@ const Dashboard = () => {
   const [isLoadingActive, setIsLoadingActive] = useState(true);
   const [copiedText, setCopiedText] = useState({});
   const [timers, setTimers] = useState({});
+  const [modalMessage, setModalMessage] = useState(null);
   
   // Track interval references to clear them on unmount
   const pollIntervals = useRef({});
@@ -168,7 +169,10 @@ const Dashboard = () => {
         fetchDashboardData();
       }
     } catch (err) {
-      alert(err.message || 'Failed to cancel order');
+      setModalMessage({
+        title: 'Action Denied',
+        message: err.message || 'Failed to cancel order',
+      });
     }
   };
 
@@ -354,6 +358,27 @@ const Dashboard = () => {
           </table>
         </div>
       </div>
+
+      {/* Custom Notice Modal */}
+      {modalMessage && (
+        <div style={{
+          position: 'fixed', top: 0, left: 0, right: 0, bottom: 0,
+          backgroundColor: 'rgba(0, 0, 0, 0.75)', zIndex: 9999,
+          display: 'flex', alignItems: 'center', justifyContent: 'center',
+          padding: '1rem'
+        }}>
+          <div className="card" style={{ maxWidth: '400px', width: '100%', textAlign: 'center', padding: '2rem', animation: 'fadeIn 0.2s ease-out' }}>
+            <AlertCircle size={48} style={{ color: 'var(--warning)', margin: '0 auto 1rem' }} />
+            <h3 style={{ marginBottom: '0.75rem', fontSize: '1.3rem', fontWeight: 'bold' }}>{modalMessage.title}</h3>
+            <p className="text-secondary" style={{ marginBottom: '1.5rem', lineHeight: '1.5' }}>
+              {modalMessage.message}
+            </p>
+            <button className="btn btn-primary w-full" onClick={() => setModalMessage(null)} style={{ padding: '0.75rem' }}>
+              Got it
+            </button>
+          </div>
+        </div>
+      )}
     </div>
   );
 };
