@@ -142,43 +142,61 @@ export const buyNumber = async (req, res, next) => {
     }
 
     // 4. Create Order & Log transaction
-    const expiresSec = apiResponse.expires_in || 1200;
-    const expiresAt = new Date(Date.now() + expiresSec * 1000);
+    let order;
+    try {
+      const expiresSec = apiResponse.expires_in || 1200;
+      const expiresAt = new Date(Date.now() + expiresSec * 1000);
 
-    const order = await OTPOrder.create({
-      userId: req.user.id,
-      activationId: apiResponse.activation_id,
-      phoneNumber: apiResponse.number,
-      service: apiResponse.service,
-      serviceCode: serviceCode,
-      country: apiResponse.country,
-      countryCode: cCode,
-      price: finalPrice,
-      apiPrice: apiPrice,
-      status: 'pending',
-      multiSms: apiResponse.multi_sms || false,
-      expiresAt: expiresAt,
-    });
+      order = await OTPOrder.create({
+        userId: req.user.id,
+        activationId: apiResponse.activation_id,
+        phoneNumber: apiResponse.number,
+        service: apiResponse.service,
+        serviceCode: serviceCode,
+        country: apiResponse.country,
+        countryCode: cCode,
+        price: finalPrice,
+        apiPrice: apiPrice,
+        status: 'pending',
+        multiSms: apiResponse.multi_sms || false,
+        expiresAt: expiresAt,
+      });
 
-    const transaction = await Transaction.create({
-      userId: req.user.id,
-      amount: -finalPrice,
-      type: 'purchase',
-      description: `Purchase number ${apiResponse.number} for ${apiResponse.service}`,
-      referenceId: order._id,
-    });
+      const transaction = await Transaction.create({
+        userId: req.user.id,
+        amount: -finalPrice,
+        type: 'purchase',
+        description: `Purchase number ${apiResponse.number} for ${apiResponse.service}`,
+        referenceId: order._id,
+      });
 
-    await AuditLog.create({
-      action: 'OTP_BUY_SUCCESS',
-      details: { orderId: order._id, activationId: order.activationId, price: finalPrice },
-      userId: req.user.id,
-    });
+      await AuditLog.create({
+        action: 'OTP_BUY_SUCCESS',
+        details: { orderId: order._id, activationId: order.activationId, price: finalPrice },
+        userId: req.user.id,
+      });
 
-    return res.status(201).json({
-      success: true,
-      message: 'Number purchased successfully',
-      order,
-    });
+      return res.status(201).json({
+        success: true,
+        message: 'Number purchased successfully',
+        order,
+      });
+    } catch (dbError) {
+      // Rollback user balance
+      await User.findByIdAndUpdate(req.user.id, { $inc: { balance: finalPrice } });
+      
+      // Attempt to cancel the number on SastaOTP
+      if (apiResponse && apiResponse.activation_id) {
+        try {
+          await sastaOtpService.setStatus(apiResponse.activation_id, -1);
+        } catch (cancelErr) {
+          console.warn('Failed to cancel on provider side after DB error:', cancelErr.message);
+        }
+      }
+
+      res.status(500);
+      throw new Error(`System error while saving order. Balance has been refunded.`);
+    }
   } catch (error) {
     next(error);
   }
