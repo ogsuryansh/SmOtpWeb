@@ -202,12 +202,6 @@ export const sastaOtpService = {
       if (data.services && typeof data.services === 'object') {
         for (const key in data.services) {
           const srv = data.services[key];
-          
-          // Filter out services that have zero available stock
-          if (srv.available <= 0) {
-            delete data.services[key];
-            continue;
-          }
 
           if (!srv.countries || srv.countries.length === 0) {
             srv.countries = [
