@@ -149,16 +149,16 @@ export const buyNumber = async (req, res, next) => {
 
       order = await OTPOrder.create({
         userId: req.user.id,
-        activationId: apiResponse.activation_id,
-        phoneNumber: apiResponse.number,
-        service: apiResponse.service,
+        activationId: apiResponse.activation_id || apiResponse.activationId,
+        phoneNumber: apiResponse.number || apiResponse.phoneNumber || apiResponse.phone,
+        service: apiResponse.service || serviceInfo.name || serviceCode,
         serviceCode: serviceCode,
-        country: apiResponse.country,
+        country: apiResponse.country || countryConfig.country_name || cCode,
         countryCode: cCode,
         price: finalPrice,
         apiPrice: apiPrice,
         status: 'pending',
-        multiSms: apiResponse.multi_sms || false,
+        multiSms: apiResponse.multi_sms || apiResponse.multiSms || false,
         expiresAt: expiresAt,
       });
 
