@@ -1,5 +1,6 @@
 import Setting from '../models/Setting.js';
 import AuditLog from '../models/AuditLog.js';
+import https from 'https';
 
 const BASE_URL = 'https://sastaotp.com/stubs/handler_api.php';
 
@@ -11,10 +12,24 @@ async function getApiKey() {
 
 // Helper to bypass Cloudflare/WAF 403 Forbidden
 async function fetchApi(url) {
-  return fetch(url, {
-    headers: {
-      'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/115.0.0.0 Safari/537.36'
-    }
+  return new Promise((resolve, reject) => {
+    https.get(url, {
+      headers: {
+        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/115.0.0.0 Safari/537.36',
+        'Accept': 'application/json, text/plain, */*'
+      }
+    }, (res) => {
+      let data = '';
+      res.on('data', chunk => data += chunk);
+      res.on('end', () => {
+        resolve({
+          ok: res.statusCode >= 200 && res.statusCode < 300,
+          status: res.statusCode,
+          text: async () => data,
+          json: async () => JSON.parse(data)
+        });
+      });
+    }).on('error', reject);
   });
 }
 
