@@ -133,12 +133,16 @@ export const buyNumber = async (req, res, next) => {
     let apiResponse;
     try {
       apiResponse = await sastaOtpService.getNumber(serviceCode, cCode, null, !!multiSms);
+      
+      if (!apiResponse || (!apiResponse.number && !apiResponse.phoneNumber && !apiResponse.phone && !apiResponse.activation_id)) {
+        throw new Error('NO_NUMBERS');
+      }
     } catch (apiError) {
       // Rollback user balance
       await User.findByIdAndUpdate(req.user.id, { $inc: { balance: finalPrice } });
       
       res.status(400);
-      throw new Error(`API Error: ${apiError.message}`);
+      throw new Error('This country or service is not available, try something else');
     }
 
     // 4. Create Order & Log transaction
@@ -195,7 +199,7 @@ export const buyNumber = async (req, res, next) => {
       }
 
       res.status(500);
-      throw new Error(`System error while saving order. Balance has been refunded.`);
+      throw new Error(`This country or service is not available, try something else`);
     }
   } catch (error) {
     next(error);

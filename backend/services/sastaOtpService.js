@@ -9,6 +9,15 @@ async function getApiKey() {
   return setting ? setting.value : (process.env.SASTA_OTP_API_KEY || '');
 }
 
+// Helper to bypass Cloudflare/WAF 403 Forbidden
+async function fetchApi(url) {
+  return fetch(url, {
+    headers: {
+      'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/115.0.0.0 Safari/537.36'
+    }
+  });
+}
+
 // Helper to log API requests/responses in AuditLogs
 async function logApiCall(action, params, response, isMock = false) {
   try {
@@ -96,7 +105,7 @@ export const sastaOtpService = {
     const apiKey = await getApiKey();
     try {
       const url = `${BASE_URL}?api_key=${apiKey}&action=getBalance&format=json`;
-      const res = await fetch(url);
+      const res = await fetchApi(url);
       const data = await res.json();
       await logApiCall('getBalance', {}, data, false);
       return data;
@@ -126,11 +135,11 @@ export const sastaOtpService = {
         const countriesUrl = `${BASE_URL}?api_key=${apiKey}&action=getCountries&format=json`;
 
         // Fetch sequentially to avoid rate-limiting from the provider
-        const serviceRes = await fetch(serviceUrl);
+        const serviceRes = await fetchApi(serviceUrl);
         const serviceData = await serviceRes.json();
         console.log('DEBUG: SastaOTP serviceData:', JSON.stringify(serviceData).substring(0, 300) + '...');
 
-        const pricesRes = await fetch(pricesUrl);
+        const pricesRes = await fetchApi(pricesUrl);
         const pricesData = await pricesRes.json();
         console.log('DEBUG: SastaOTP pricesData:', JSON.stringify(pricesData).substring(0, 300) + '...');
         
@@ -138,7 +147,7 @@ export const sastaOtpService = {
           throw new Error(`SastaOTP getPrices error: ${pricesData.message || pricesData.error || 'Unknown'}`);
         }
 
-        const countriesRes = await fetch(countriesUrl);
+        const countriesRes = await fetchApi(countriesUrl);
         const countriesData = await countriesRes.json();
         console.log('DEBUG: SastaOTP countriesData keys:', Object.keys(countriesData.countries || {}).length);
 
@@ -194,13 +203,19 @@ export const sastaOtpService = {
 
       // No serviceCode specified: standard fast getServicesList query
       let url = `${BASE_URL}?api_key=${apiKey}&action=getServicesList&format=json`;
-      const res = await fetch(url);
+      const res = await fetchApi(url);
       const data = await res.json();
 
       // Normalize: live API returns countries:[] for all services.
       // Inject a default India entry so the frontend always has at least one country option on initial load.
       if (data.services && typeof data.services === 'object') {
+        const allowedServices = ['tg', 'wa', 'go', 'ig', 'fb', 'tw', 'nf', 'az', 'tk', 'ds', 'ub', 'tb', 'vk', 'mm', 'lf', 'vi', 'sn', 'ok', 'yl', 'mb', 'we', 'qq', 'bl', 'dr'];
         for (const key in data.services) {
+          if (!allowedServices.includes(key.toLowerCase())) {
+            delete data.services[key];
+            continue;
+          }
+          
           const srv = data.services[key];
 
           if (!srv.countries || srv.countries.length === 0) {
@@ -248,7 +263,7 @@ export const sastaOtpService = {
     const apiKey = await getApiKey();
     try {
       const url = `${BASE_URL}?api_key=${apiKey}&action=getCountries&format=json`;
-      const res = await fetch(url);
+      const res = await fetchApi(url);
       const data = await res.json();
       return data;
     } catch (err) {
@@ -322,7 +337,7 @@ export const sastaOtpService = {
       if (maxPrice) url += `&maxPrice=${maxPrice}`;
       if (multiSms) url += `&multiSMS=1`;
 
-      const res = await fetch(url);
+      const res = await fetchApi(url);
       const text = await res.text();
       
       let data;
@@ -403,7 +418,7 @@ export const sastaOtpService = {
     const apiKey = await getApiKey();
     try {
       const url = `${BASE_URL}?api_key=${apiKey}&action=getStatusV2&id=${activationId}`;
-      const res = await fetch(url);
+      const res = await fetchApi(url);
       const data = await res.json();
       await logApiCall('getStatus', { id: activationId }, data, false);
       return data;
@@ -448,7 +463,7 @@ export const sastaOtpService = {
     const apiKey = await getApiKey();
     try {
       const url = `${BASE_URL}?api_key=${apiKey}&action=setStatus&id=${activationId}&status=${status}`;
-      const res = await fetch(url);
+      const res = await fetchApi(url);
       const text = await res.text();
       await logApiCall('setStatus', params, { response: text }, false);
       return text;
