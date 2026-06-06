@@ -143,113 +143,99 @@ export const sastaOtpService = {
 
     const apiKey = await getApiKey();
     try {
+      // 1. Fetch Countries list (works)
+      const countriesUrl = `${BASE_URL}?api_key=${apiKey}&action=getCountries&format=json`;
+      const countriesRes = await fetchApi(countriesUrl);
+      const countriesData = await countriesRes.json();
+      
+      if (countriesData.status === 'ERROR') {
+        throw new Error(`SastaOTP getCountries error: ${countriesData.message || countriesData.error || 'Unknown'}`);
+      }
+
+      // 2. Fetch Prices (works)
+      let pricesUrl = `${BASE_URL}?api_key=${apiKey}&action=getPrices&format=json`;
       if (serviceCode) {
-        // Fetch service details, prices, and countries concurrently
-        const serviceUrl = `${BASE_URL}?api_key=${apiKey}&action=getServicesList&service=${serviceCode}&format=json`;
-        const pricesUrl = `${BASE_URL}?api_key=${apiKey}&action=getPrices&service=${serviceCode}&format=json`;
-        const countriesUrl = `${BASE_URL}?api_key=${apiKey}&action=getCountries&format=json`;
+        pricesUrl = `${BASE_URL}?api_key=${apiKey}&action=getPrices&service=${serviceCode}&format=json`;
+      }
+      
+      const pricesRes = await fetchApi(pricesUrl);
+      const pricesData = await pricesRes.json();
+      
+      if (pricesData.status === 'ERROR') {
+        throw new Error(`SastaOTP getPrices error: ${pricesData.message || pricesData.error || 'Unknown'}`);
+      }
 
-        // Fetch sequentially to avoid rate-limiting from the provider
-        const serviceRes = await fetchApi(serviceUrl);
-        const serviceData = await serviceRes.json();
-        console.log('DEBUG: SastaOTP serviceData:', JSON.stringify(serviceData).substring(0, 300) + '...');
+      const countriesMap = countriesData.countries || {};
+      const pricesMap = pricesData.data || pricesData || {};
+      
+      // We will construct the expected services object
+      const services = {};
+      
+      const allowedServices = ['tg', 'wa', 'go', 'ig', 'fb', 'tw', 'nf', 'az', 'tk', 'ds', 'ub', 'tb', 'vk', 'mm', 'lf', 'vi', 'sn', 'ok', 'yl', 'mb', 'we', 'qq', 'bl', 'dr'];
+      
+      const SERVICE_NAMES = {
+        tg: 'Telegram', wa: 'WhatsApp', go: 'Google / Gmail', ig: 'Instagram', fb: 'Facebook', tw: 'Twitter / X', 
+        nf: 'Netflix', az: 'Amazon', tk: 'TikTok', ds: 'Discord', ub: 'Uber', tb: 'Taobao', vk: 'VKontakte', 
+        mm: 'WeChat', lf: 'Line', vi: 'Viber', sn: 'Snapchat', ok: 'Odnoklassniki', yl: 'Yandex', mb: 'Yahoo', 
+        we: 'Weibo', qq: 'QQ', bl: 'Bigo Live', dr: 'Tinder',
+      };
 
-        const pricesRes = await fetchApi(pricesUrl);
-        const pricesData = await pricesRes.json();
-        console.log('DEBUG: SastaOTP pricesData:', JSON.stringify(pricesData).substring(0, 300) + '...');
+      for (const countryId in pricesMap) {
+        const countryPrices = pricesMap[countryId];
         
-        if (pricesData.status === 'ERROR') {
-          throw new Error(`SastaOTP getPrices error: ${pricesData.message || pricesData.error || 'Unknown'}`);
-        }
+        for (const code in countryPrices) {
+          if (!allowedServices.includes(code.toLowerCase())) continue;
+          if (serviceCode && code !== serviceCode) continue;
 
-        const countriesRes = await fetchApi(countriesUrl);
-        const countriesData = await countriesRes.json();
-        console.log('DEBUG: SastaOTP countriesData keys:', Object.keys(countriesData.countries || {}).length);
+          const servicePriceInfo = countryPrices[code];
+          
+          if (!services[code]) {
+            services[code] = {
+              code: code,
+              name: SERVICE_NAMES[code] || code.toUpperCase(),
+              price: servicePriceInfo.cost, // base price reference
+              countries: []
+            };
+          }
 
-        if (countriesData.status === 'ERROR') {
-          throw new Error(`SastaOTP getCountries error: ${countriesData.message || countriesData.error || 'Unknown'}`);
-        }
+          if (servicePriceInfo.count > 0) {
+            const countryInfo = countriesMap[countryId];
+            let countryName = countryInfo?.name || `Country ${countryId}`;
+            let countryCodeVal = countryInfo?.code || countryId;
+            let countryFlag = countryInfo?.flag || '🌐';
 
-        const serviceInfo = serviceData.services?.[serviceCode];
-        if (serviceInfo) {
-          const countriesMap = countriesData.countries || {};
-          const pricesMap = pricesData.data || {};
-          const countriesList = [];
+            if (countryId === '*') {
+              countryName = 'Any Country';
+              countryCodeVal = '*';
+              countryFlag = '🌐';
+            }
 
-          for (const countryId in pricesMap) {
-            const countryPrices = pricesMap[countryId];
-            const servicePriceInfo = countryPrices[serviceCode];
-            
-            if (servicePriceInfo && servicePriceInfo.count > 0) {
-              const countryInfo = countriesMap[countryId];
-              let countryName = countryInfo?.name || `Country ${countryId}`;
-              let countryCodeVal = countryInfo?.code || countryId;
-              let countryFlag = countryInfo?.flag || '🌐';
-
-              if (countryId === '*') {
-                const isIndian = serviceInfo.name?.toLowerCase().includes('indian') || serviceInfo.name?.toLowerCase().includes('india');
-                countryName = isIndian ? 'India' : 'Any Country';
-                countryCodeVal = '*';
-                countryFlag = isIndian ? '🇮🇳' : '🌐';
-              }
-
-              countriesList.push({
-                country_code: countryCodeVal,
-                country_name: countryName,
-                flag: countryFlag,
-                price: servicePriceInfo.cost,
-                qty: servicePriceInfo.count
-              });
+            // check if country already added to this service
+            if (!services[code].countries.find(c => c.country_code === countryCodeVal)) {
+               services[code].countries.push({
+                 country_code: countryCodeVal,
+                 country_name: countryName,
+                 flag: countryFlag,
+                 price: servicePriceInfo.cost,
+                 qty: servicePriceInfo.count
+               });
             }
           }
-
-          // Sort: India (22) at top, then alphabetical
-          countriesList.sort((a, b) => {
-            if (a.country_code === '22') return -1;
-            if (b.country_code === '22') return 1;
-            return a.country_name.localeCompare(b.country_name);
-          });
-
-          serviceInfo.countries = countriesList;
-        }
-
-        return serviceData;
-      }
-
-      // No serviceCode specified: standard fast getServicesList query
-      let url = `${BASE_URL}?api_key=${apiKey}&action=getServicesList&format=json`;
-      const res = await fetchApi(url);
-      const data = await res.json();
-
-      // Normalize: live API returns countries:[] for all services.
-      // Inject a default India entry so the frontend always has at least one country option on initial load.
-      if (data.services && typeof data.services === 'object') {
-        const allowedServices = ['tg', 'wa', 'go', 'ig', 'fb', 'tw', 'nf', 'az', 'tk', 'ds', 'ub', 'tb', 'vk', 'mm', 'lf', 'vi', 'sn', 'ok', 'yl', 'mb', 'we', 'qq', 'bl', 'dr'];
-        for (const key in data.services) {
-          if (!allowedServices.includes(key.toLowerCase())) {
-            delete data.services[key];
-            continue;
-          }
-          
-          const srv = data.services[key];
-
-          if (!srv.countries || srv.countries.length === 0) {
-            srv.countries = [
-              {
-                country_code: '22',
-                country_name: 'India',
-                flag: '🇮🇳',
-                price: srv.price || 0,
-                qty: srv.available || 0,
-              }
-            ];
-          }
         }
       }
 
-      return data;
+      // Sort countries for each service (India '22' first, then alphabetical)
+      for (const code in services) {
+        services[code].countries.sort((a, b) => {
+          if (a.country_code === '22') return -1;
+          if (b.country_code === '22') return 1;
+          return a.country_name.localeCompare(b.country_name);
+        });
+      }
+
+      return { status: 'OK', services, isMock: false };
     } catch (err) {
-      console.error('SastaOTP API getServicesList error, falling back to mock:', err.message);
+      console.error('SastaOTP API error, falling back to mock:', err.message);
       let filtered = MOCK_SERVICES;
       if (serviceCode) {
         filtered = MOCK_SERVICES[serviceCode] ? { [serviceCode]: MOCK_SERVICES[serviceCode] } : {};
