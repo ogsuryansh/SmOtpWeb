@@ -338,35 +338,59 @@ export const sastaOtpService = {
       if (maxPrice) url += `&maxPrice=${maxPrice}`;
       if (multiSms) url += `&multiSMS=1`;
 
-      const res = await fetchApi(url);
-      const text = await res.text();
-      
       let data;
-      try {
-        // Attempt to parse as JSON first
-        data = JSON.parse(text);
-      } catch (e) {
-        // If it fails, it's likely a standard text response (e.g., ACCESS_NUMBER:123:456 or NO_NUMBERS)
-        if (text.startsWith('ACCESS_NUMBER:')) {
-          const parts = text.split(':');
-          data = {
-            status: 'OK',
-            activation_id: parts[1],
-            number: parts[2],
-            phone_number: parts[2],
-            service: serviceCode,
-            service_code: serviceCode,
-            country: countryCode,
-            country_code: countryCode
-          };
-        } else {
-          throw new Error(text); // e.g., NO_BALANCE, NO_NUMBERS, NO_BALANCE_FOR_NUMBER
+      let text;
+      let maxAttempts = 5;
+      
+      for (let attempt = 1; attempt <= maxAttempts; attempt++) {
+        try {
+          const res = await fetchApi(url);
+          text = await res.text();
+          
+          try {
+            data = JSON.parse(text);
+          } catch (e) {
+            if (text.startsWith('ACCESS_NUMBER:')) {
+              const parts = text.split(':');
+              data = {
+                status: 'OK',
+                activation_id: parts[1],
+                number: parts[2],
+                phone_number: parts[2],
+                service: serviceCode,
+                service_code: serviceCode,
+                country: countryCode,
+                country_code: countryCode
+              };
+            } else {
+              data = { status: 'ERROR', error: text };
+            }
+          }
+          
+          const isError = data.status === 'ERROR' || data.error;
+          const errString = String(data.error || text || '');
+          
+          if (!isError) {
+            break; // Success!
+          }
+          
+          // Retry logic if there are no numbers or provider fails
+          if (errString.includes('NO_NUMBERS') || errString.includes('OPERATION_NOT_AVAILABLE') || errString.includes('WRONG_MAX_PRICE')) {
+            console.log(`SastaOTP getNumber attempt ${attempt} failed (${errString}). Retrying...`);
+            if (attempt === maxAttempts) break;
+            await new Promise(r => setTimeout(r, 1200)); // wait 1.2s before retry
+          } else {
+            break; // Break on fatal errors like BAD_KEY, NO_BALANCE
+          }
+        } catch (e) {
+          console.error(`SastaOTP fetchApi failed on attempt ${attempt}:`, e.message);
+          if (attempt === maxAttempts) throw e;
+          await new Promise(r => setTimeout(r, 1200));
         }
       }
 
       await logApiCall('getNumber', params, data, false);
 
-      // Handle raw string error codes if API returns status: "ACCESS_NUMBER" style or similar
       if (data.status === 'ERROR' || data.error) {
         throw new Error(data.error || data.message || 'API_ERROR');
       }

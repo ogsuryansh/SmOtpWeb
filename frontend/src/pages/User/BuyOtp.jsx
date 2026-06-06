@@ -175,6 +175,11 @@ const BuyOtp = () => {
   const [multiSmsMultiplier, setMultiSmsMultiplier] = useState(2);
   const [sortBy, setSortBy] = useState('default'); // 'default', 'cheap-first', 'expensive-first'
 
+  // Attempt System State
+  const [isSearching, setIsSearching] = useState(false);
+  const [searchAttempt, setSearchAttempt] = useState(0);
+  const searchMaxAttempts = 600;
+
   window.rawServices = rawServices;
   window.selectedService = selectedService;
   window.countriesLoading = countriesLoading;
@@ -237,6 +242,45 @@ const BuyOtp = () => {
       isMounted = false;
     };
   }, [selectedService, isMock]);
+
+  // ── Polling System (Attempt loop) ─────────────────────────────────────────
+  useEffect(() => {
+    let timeoutId;
+    let isMounted = true;
+
+    const poll = async () => {
+      if (!isSearching) return;
+      
+      try {
+        const res = await api.otp.buyNumber(selectedService, selectedCountry, multiSms);
+        if (res.success && isMounted) {
+          setIsSearching(false);
+          refreshUser();
+          navigate('/dashboard');
+        }
+      } catch (err) {
+        if (!isMounted || !isSearching) return;
+        
+        if (searchAttempt >= searchMaxAttempts) {
+          setError(err.message || 'Purchase failed after maximum attempts.');
+          setIsSearching(false);
+        } else {
+          timeoutId = setTimeout(() => {
+            setSearchAttempt(prev => prev + 1);
+          }, 1500); // 1.5s delay between attempts
+        }
+      }
+    };
+
+    if (isSearching) {
+      poll();
+    }
+
+    return () => {
+      isMounted = false;
+      clearTimeout(timeoutId);
+    };
+  }, [isSearching, searchAttempt]);
 
   // ── Build service options ─────────────────────────────────────────────────
   const serviceOptions = Object.entries(rawServices).map(([code, srv]) => ({
@@ -334,15 +378,9 @@ const BuyOtp = () => {
     if (!details?.price) { setError('Service not available in this country.'); return; }
     if (!details.available) { setError('Out of stock. Try another country.'); return; }
     if (user.balance < details.price) { setError('Insufficient balance. Please deposit funds.'); return; }
-    try {
-      setIsPurchasing(true);
-      const res = await api.otp.buyNumber(selectedService, selectedCountry, multiSms);
-      if (res.success) { refreshUser(); navigate('/dashboard'); }
-    } catch (err) {
-      setError(err.message || 'Purchase failed. Try again.');
-    } finally {
-      setIsPurchasing(false);
-    }
+    
+    setIsSearching(true);
+    setSearchAttempt(1);
   };
 
   return (
@@ -356,6 +394,89 @@ const BuyOtp = () => {
         <h1 style={{ fontSize: '2rem', fontWeight: 800, fontFamily: 'var(--font-display)' }}>Purchase Virtual Number</h1>
         <p className="text-secondary">Choose your target application and country to reserve a verification number</p>
       </div>
+
+      {/* ── Attempt Modal Overlay ────────────────────────────────────────────── */}
+      {isSearching && (
+        <div style={{
+          position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, zIndex: 99999,
+          background: 'rgba(0,0,0,0.7)', display: 'flex', alignItems: 'center', justifyContent: 'center',
+          animation: 'ddFade 0.2s ease'
+        }}>
+          <div style={{
+            background: 'var(--bg-primary)', width: '90%', maxWidth: '400px',
+            borderRadius: '16px', overflow: 'hidden', boxShadow: '0 24px 48px rgba(0,0,0,0.5)',
+            display: 'flex', flexDirection: 'column'
+          }}>
+            {/* Header */}
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '1rem 1.25rem', borderBottom: '1px solid var(--border-color)' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', color: 'var(--primary)' }}>
+                <Loader size={18} className="spinner" />
+                <span style={{ fontWeight: 700, fontSize: '1.1rem' }}>Finding Number...</span>
+              </div>
+              <X size={20} style={{ color: 'var(--text-muted)', cursor: 'pointer' }} onClick={() => setIsSearching(false)} />
+            </div>
+
+            {/* Body */}
+            <div style={{ padding: '2rem 1.25rem', display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
+              
+              {/* Icons & Names */}
+              <div style={{ display: 'flex', alignItems: 'center', gap: '1rem', marginBottom: '1.5rem' }}>
+                <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '0.5rem' }}>
+                  <div style={{ width: 56, height: 56, borderRadius: '16px', background: 'var(--bg-secondary)', border: '1px solid var(--border-color)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '2rem' }}>
+                    {sortedCountryOptions.find(c => c.value === selectedCountry)?.icon || '🌐'}
+                  </div>
+                  <span style={{ fontSize: '0.8rem', fontWeight: 600, color: 'var(--text-secondary)' }}>
+                    {sortedCountryOptions.find(c => c.value === selectedCountry)?.label || 'Country'}
+                  </span>
+                </div>
+                <div style={{ color: 'var(--text-muted)', fontSize: '1.5rem', marginTop: '-1.5rem' }}>+</div>
+                <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '0.5rem' }}>
+                  <div style={{ width: 56, height: 56, borderRadius: '16px', background: 'var(--bg-secondary)', border: '1px solid var(--border-color)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--primary)' }}>
+                    <Smartphone size={28} />
+                  </div>
+                  <span style={{ fontSize: '0.8rem', fontWeight: 600, color: 'var(--text-secondary)' }}>
+                    {serviceOptions.find(s => s.value === selectedService)?.label || 'Service'}
+                  </span>
+                </div>
+              </div>
+
+              {/* Progress bar */}
+              <div style={{ width: '100%', height: '4px', background: 'var(--bg-secondary)', borderRadius: '2px', overflow: 'hidden', marginBottom: '1rem' }}>
+                <div style={{ 
+                  height: '100%', background: 'var(--primary)', transition: 'width 0.3s ease',
+                  width: `${Math.min(100, (searchAttempt / searchMaxAttempts) * 100)}%`
+                }}></div>
+              </div>
+
+              <div style={{ fontSize: '0.9rem', color: 'var(--text-secondary)', marginBottom: '1rem', fontWeight: 500 }}>
+                Attempt {searchAttempt} of {searchMaxAttempts} • ₹{details?.price?.toFixed(2) || '0.00'}
+              </div>
+
+              <button 
+                onClick={() => setIsSearching(false)}
+                style={{
+                  width: '100%', padding: '0.75rem', borderRadius: '8px',
+                  background: 'transparent', border: '1px solid #ef4444', color: '#ef4444',
+                  fontWeight: 600, cursor: 'pointer', transition: 'all 0.2s ease',
+                  fontSize: '0.95rem'
+                }}
+                onMouseEnter={e => { e.currentTarget.style.background = 'rgba(239, 68, 68, 0.1)'; }}
+                onMouseLeave={e => { e.currentTarget.style.background = 'transparent'; }}
+              >
+                Cancel Search
+              </button>
+            </div>
+            
+            {/* Taking too long section */}
+            <div style={{ background: 'var(--bg-secondary)', padding: '1.25rem', borderTop: '1px solid var(--border-color)', textAlign: 'center' }}>
+              <h4 style={{ fontSize: '0.9rem', fontWeight: 600, marginBottom: '0.4rem' }}>Taking too long?</h4>
+              <p style={{ fontSize: '0.75rem', color: 'var(--text-secondary)', lineHeight: 1.4 }}>
+                This country or service might be temporarily out of stock on our primary servers. Let the system continue searching, or try selecting a different country.
+              </p>
+            </div>
+          </div>
+        </div>
+      )}
 
       {isMock && (
         <div className="badge badge-primary w-full m-b-2" style={{ padding: '0.75rem 1.25rem', textTransform: 'none', borderRadius: 'var(--border-radius-sm)', display: 'block', fontSize: '0.85rem' }}>
@@ -519,10 +640,8 @@ const BuyOtp = () => {
               )}
 
               <button onClick={handlePurchase} className="btn btn-primary w-full m-t-2"
-                disabled={isPurchasing || !details || !details.available || (user && user.balance < details?.price)}>
-                {isPurchasing
-                  ? <><Loader size={18} className="spinner-sm" /><span>Reserving...</span></>
-                  : <><ShoppingBag size={18} /><span>Buy Number</span></>}
+                disabled={isSearching || !details || !details.available || (user && user.balance < details?.price)}>
+                <ShoppingBag size={18} /><span>Buy Number</span>
               </button>
             </div>
 
