@@ -101,6 +101,9 @@ const MOCK_SERVICES = {
 
 const mockActivations = new Map(); // Store simulated orders in memory
 
+let CACHED_SERVICES = null;
+let CACHED_SERVICES_TIME = 0;
+
 export const sastaOtpService = {
   // Check if API is in Mock Mode
   async isMockMode() {
@@ -150,9 +153,38 @@ export const sastaOtpService = {
       we: 'Weibo', qq: 'QQ', bl: 'Bigo Live', dr: 'Tinder',
     };
 
-    // HIGH-SPEED OPTIMIZATION: If no serviceCode is provided, just return the predefined list of allowed services.
-    // This prevents fetching a massive 100KB+ JSON and timing out on the initial page load.
+    // HIGH-SPEED OPTIMIZATION: Fetch all services from provider and cache them for 5 minutes
     if (!serviceCode) {
+      const now = Date.now();
+      if (CACHED_SERVICES && (now - CACHED_SERVICES_TIME < 5 * 60 * 1000)) {
+         return { status: 'OK', services: CACHED_SERVICES, isMock: false };
+      }
+
+      const apiKey = await getApiKey();
+      try {
+        const servicesUrl = `${BASE_URL}?api_key=${apiKey}&action=getServicesList&format=json`;
+        const res = await fetchApi(servicesUrl);
+        const data = await res.json();
+        
+        if (data.status === 'OK' && data.services) {
+            const formatted = {};
+            for (const code in data.services) {
+               formatted[code] = {
+                 code: code,
+                 name: data.services[code].name || SERVICE_NAMES[code] || code.toUpperCase(),
+                 price: data.services[code].price || 0,
+                 countries: [] // Will be populated when specific service is requested
+               };
+            }
+            CACHED_SERVICES = formatted;
+            CACHED_SERVICES_TIME = now;
+            return { status: 'OK', services: formatted, isMock: false };
+        }
+      } catch (err) {
+        console.error('Failed to fetch full services list:', err.message);
+      }
+      
+      // Fallback
       const initServices = {};
       allowedServices.forEach(code => {
         initServices[code] = {

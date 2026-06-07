@@ -293,7 +293,12 @@ export const pollOrder = async (req, res, next) => {
       });
       
       return res.status(200).json({ success: true, order: updatedOrder });
-    } else if (statusData.status === 'STATUS_CANCEL') {
+    } else if (
+      statusData.status === 'STATUS_CANCEL' || 
+      statusData.error === 'NO_ACTIVATION' || 
+      statusData.error === 'STATUS_CANCEL' || 
+      (typeof statusData.error === 'string' && statusData.error.includes('CANCEL'))
+    ) {
       // Cancelled by provider or user
       const updatedOrder = await OTPOrder.findOneAndUpdate(
         { _id: order._id, status: 'pending' },
