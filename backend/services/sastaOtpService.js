@@ -141,70 +141,59 @@ export const sastaOtpService = {
       return { status: 'OK', services: filtered, isMock: true };
     }
 
+    const allowedServices = ['tg', 'wa', 'go', 'ig', 'fb', 'tw', 'nf', 'az', 'tk', 'ds', 'ub', 'tb', 'vk', 'mm', 'lf', 'vi', 'sn', 'ok', 'yl', 'mb', 'we', 'qq', 'bl', 'dr'];
+    
+    const SERVICE_NAMES = {
+      tg: 'Telegram', wa: 'WhatsApp', go: 'Google / Gmail', ig: 'Instagram', fb: 'Facebook', tw: 'Twitter / X', 
+      nf: 'Netflix', az: 'Amazon', tk: 'TikTok', ds: 'Discord', ub: 'Uber', tb: 'Taobao', vk: 'VKontakte', 
+      mm: 'WeChat', lf: 'Line', vi: 'Viber', sn: 'Snapchat', ok: 'Odnoklassniki', yl: 'Yandex', mb: 'Yahoo', 
+      we: 'Weibo', qq: 'QQ', bl: 'Bigo Live', dr: 'Tinder',
+    };
+
+    // HIGH-SPEED OPTIMIZATION: If no serviceCode is provided, just return the predefined list of allowed services.
+    // This prevents fetching a massive 100KB+ JSON and timing out on the initial page load.
+    if (!serviceCode) {
+      const initServices = {};
+      allowedServices.forEach(code => {
+        initServices[code] = {
+          code: code,
+          name: SERVICE_NAMES[code] || code.toUpperCase(),
+          price: 0,
+          countries: []
+        };
+      });
+      return { status: 'OK', services: initServices, isMock: false };
+    }
+
     const apiKey = await getApiKey();
     try {
-      // 1. Fetch Countries list (works)
-      const countriesUrl = `${BASE_URL}?api_key=${apiKey}&action=getCountries&format=json`;
-      const countriesRes = await fetchApi(countriesUrl);
-      const countriesData = await countriesRes.json();
-      
-      if (countriesData.status === 'ERROR') {
-        throw new Error(`SastaOTP getCountries error: ${countriesData.message || countriesData.error || 'Unknown'}`);
-      }
-
-      // 2. Fetch Prices (works)
-      let pricesUrl = `${BASE_URL}?api_key=${apiKey}&action=getPrices&format=json`;
-      if (serviceCode) {
-        pricesUrl = `${BASE_URL}?api_key=${apiKey}&action=getPrices&service=${serviceCode}&format=json`;
-      }
+      const pricesUrl = `${BASE_URL}?api_key=${apiKey}&action=getPricesV3&service=${serviceCode}&format=json`;
       
       const pricesRes = await fetchApi(pricesUrl);
       const pricesData = await pricesRes.json();
       
       if (pricesData.status === 'ERROR') {
-        throw new Error(`SastaOTP getPrices error: ${pricesData.message || pricesData.error || 'Unknown'}`);
+        throw new Error(`SastaOTP getPricesV3 error: ${pricesData.message || pricesData.error || 'Unknown'}`);
       }
 
-      const countriesMap = countriesData.countries || {};
-      const pricesMap = pricesData.data || pricesData || {};
-      
-      // We will construct the expected services object
       const services = {};
+      const code = serviceCode;
       
-      const allowedServices = ['tg', 'wa', 'go', 'ig', 'fb', 'tw', 'nf', 'az', 'tk', 'ds', 'ub', 'tb', 'vk', 'mm', 'lf', 'vi', 'sn', 'ok', 'yl', 'mb', 'we', 'qq', 'bl', 'dr'];
-      
-      const SERVICE_NAMES = {
-        tg: 'Telegram', wa: 'WhatsApp', go: 'Google / Gmail', ig: 'Instagram', fb: 'Facebook', tw: 'Twitter / X', 
-        nf: 'Netflix', az: 'Amazon', tk: 'TikTok', ds: 'Discord', ub: 'Uber', tb: 'Taobao', vk: 'VKontakte', 
-        mm: 'WeChat', lf: 'Line', vi: 'Viber', sn: 'Snapchat', ok: 'Odnoklassniki', yl: 'Yandex', mb: 'Yahoo', 
-        we: 'Weibo', qq: 'QQ', bl: 'Bigo Live', dr: 'Tinder',
+      services[code] = {
+        code: code,
+        name: SERVICE_NAMES[code] || code.toUpperCase(),
+        price: 0, // base price reference
+        countries: []
       };
 
-      for (const countryId in pricesMap) {
-        const countryPrices = pricesMap[countryId];
-        
-        for (const code in countryPrices) {
-          if (!allowedServices.includes(code.toLowerCase())) continue;
-          if (serviceCode && code !== serviceCode) continue;
+      if (pricesData.countries && Array.isArray(pricesData.countries)) {
+        for (const item of pricesData.countries) {
+          if (item.qty > 0) {
+            let countryCodeVal = item.country_code;
+            let countryName = item.country_name || `Country ${countryCodeVal}`;
+            let countryFlag = item.flag || '🌐';
 
-          const servicePriceInfo = countryPrices[code];
-          
-          if (!services[code]) {
-            services[code] = {
-              code: code,
-              name: SERVICE_NAMES[code] || code.toUpperCase(),
-              price: servicePriceInfo.cost, // base price reference
-              countries: []
-            };
-          }
-
-          if (servicePriceInfo.count > 0) {
-            const countryInfo = countriesMap[countryId];
-            let countryName = countryInfo?.name || `Country ${countryId}`;
-            let countryCodeVal = countryInfo?.code || countryId;
-            let countryFlag = countryInfo?.flag || '🌐';
-
-            if (countryId === '*') {
+            if (countryCodeVal === '*') {
               countryName = 'Any Country';
               countryCodeVal = '*';
               countryFlag = '🌐';
@@ -216,12 +205,17 @@ export const sastaOtpService = {
                  country_code: countryCodeVal,
                  country_name: countryName,
                  flag: countryFlag,
-                 price: servicePriceInfo.cost,
-                 qty: servicePriceInfo.count
+                 price: item.price,
+                 qty: item.qty
                });
             }
           }
         }
+      }
+
+      // Set base price to the cheapest option
+      if (services[code].countries.length > 0) {
+        services[code].price = Math.min(...services[code].countries.map(c => c.price));
       }
 
       // Sort countries for each service (India '22' first, then alphabetical)

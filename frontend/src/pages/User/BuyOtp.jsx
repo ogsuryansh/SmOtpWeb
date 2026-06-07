@@ -293,7 +293,7 @@ const BuyOtp = () => {
   // This ensures country_code values match what the buy API / price lookup needs
   const countryOptions = React.useMemo(() => {
     const serviceCountries = rawServices[selectedService]?.countries || [];
-    return serviceCountries.map(c => {
+    const mappedCountries = serviceCountries.map(c => {
       const code = String(c.country_code || c.code || '');
       const name = c.country_name || c.name || c.eng || code;
       
@@ -316,6 +316,12 @@ const BuyOtp = () => {
         price: c.price ?? null,
       };
     });
+
+    // TEST OPTION: Add 'Any' country to bypass SastaOTP's country-specific WRONG_MAX_PRICE errors
+    return [
+      { value: 'any', label: 'Global Server (Any Country)', subLabel: 'Recommended', icon: '🌍', qty: 999, price: mappedCountries[0]?.price || 15 },
+      ...mappedCountries
+    ];
   }, [rawServices, selectedService]);
 
   // Sort countryOptions based on sortBy state

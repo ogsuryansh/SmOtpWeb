@@ -20,16 +20,17 @@ async function fetchApi(url) {
   });
 }
 
-async function main() {
-  const url = `${BASE_URL}?api_key=${apiKey}&action=getServicesList&format=json`;
+async function fetchUrl(action, extraParams = '') {
+  const url = `${BASE_URL}?api_key=${apiKey}&action=${action}${extraParams}&format=json`;
   const response = await fetchApi(url);
-  console.log("Status Code:", response.status);
-  console.log("Response length:", response.data.length);
-  if (response.data.length < 500) {
-      console.log("Response text:", response.data);
-  } else {
-      console.log("Response snippet:", response.data.substring(0, 500));
+  console.log(`\n--- ${action}${extraParams} ---`);
+  if (action === 'getPricesV3') {
+     console.log(JSON.stringify(JSON.parse(response.data).countries.slice(0, 5), null, 2));
   }
+}
+
+async function main() {
+  await fetchUrl('getPricesV3', '&service=tg');
 }
 
 main();
