@@ -120,12 +120,14 @@ export const createZapUpiOrder = async (req, res, next) => {
       throw new Error('ZapUPI payment gateway is not configured');
     }
 
-    // Build a unique order ID prefixed with OTPADDAA_ to avoid conflict
-    // with your other website using the same ZapUPI key
     const orderId = `OTPADDAA_${req.user.id}_${Date.now()}`;
 
-    // Build the webhook URL from the BACKEND_URL env var
-    const webhookUrl = `${process.env.BACKEND_URL || `http://localhost:${process.env.PORT || 5000}`}/api/deposits/zapupi/webhook`;
+    // Build the webhook URL
+    // Fallback to request host so it works automatically on Vercel even if BACKEND_URL isn't set
+    const protocol = req.headers['x-forwarded-proto'] || req.protocol;
+    const host = req.get('host');
+    const backendBaseUrl = process.env.BACKEND_URL || `${protocol}://${host}`;
+    const webhookUrl = `${backendBaseUrl}/api/deposits/zapupi/webhook`;
     
     // Build the redirect URL for after payment
     const redirectUrl = `${process.env.FRONTEND_URL || 'https://otpaddaa.shop'}/deposits`;
