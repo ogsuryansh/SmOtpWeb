@@ -1,6 +1,8 @@
 import Deposit from '../models/Deposit.js';
 import Setting from '../models/Setting.js';
 import AuditLog from '../models/AuditLog.js';
+import User from '../models/User.js';
+import Transaction from '../models/Transaction.js';
 
 // @desc    Get payment settings details (QR Code, UPI ID, Min Deposit) for users
 // @route   GET /api/deposits/payment-details
@@ -214,7 +216,7 @@ export const zapUpiWebhook = async (req, res) => {
       return res.status(200).json({ status: 'ok' });
     }
 
-    if (status === 'Success') {
+    if (status.toLowerCase() === 'success') {
       // Double-confirm via order-status API before crediting balance
       const confirmResp = await fetch('https://pay.zapupi.com/api/order-status', {
         method: 'POST',
@@ -227,9 +229,9 @@ export const zapUpiWebhook = async (req, res) => {
       const confirmData = await confirmResp.json();
 
       if (
-        confirmData.status !== 'success' ||
+        confirmData.status.toLowerCase() !== 'success' ||
         !confirmData.data ||
-        confirmData.data.status !== 'Success'
+        confirmData.data.status.toLowerCase() !== 'success'
       ) {
         console.warn(`[ZapUPI Webhook] Could not double-confirm order: ${order_id}`);
         return res.status(200).json({ status: 'ok' });
@@ -242,13 +244,11 @@ export const zapUpiWebhook = async (req, res) => {
       await deposit.save();
 
       // Credit user balance
-      const { default: User } = await import('../models/User.js');
       await User.findByIdAndUpdate(deposit.userId, {
         $inc: { balance: deposit.amount },
       });
 
       // Create transaction record
-      const { default: Transaction } = await import('../models/Transaction.js');
       await Transaction.create({
         userId: deposit.userId,
         amount: deposit.amount,
@@ -269,7 +269,7 @@ export const zapUpiWebhook = async (req, res) => {
         },
         userId: deposit.userId,
       });
-    } else if (status === 'Failed') {
+    } else if (status.toLowerCase() === 'failed') {
       deposit.status = 'rejected';
       deposit.zapupi_txn_id = txn_id || null;
       await deposit.save();
