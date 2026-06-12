@@ -75,7 +75,7 @@ const Dashboard = () => {
             delete pollIntervals.current[orderId];
 
             // Refresh user balance & transaction list
-            refreshUser();
+            refreshUser(true);
             
             // Update active list
             setActiveOrders(prev => prev.filter(o => o._id !== orderId));
@@ -126,7 +126,7 @@ const Dashboard = () => {
             // Fetch fresh dashboard data to update tables/balance
             setTimeout(() => {
               fetchDashboardData();
-              refreshUser();
+              refreshUser(true);
             }, 1000);
           }
         } else {
@@ -165,7 +165,7 @@ const Dashboard = () => {
         setActiveOrders(prev => prev.filter(o => o._id !== orderId));
         
         // Update balance and tables
-        refreshUser();
+        refreshUser(true);
         fetchDashboardData();
       }
     } catch (err) {

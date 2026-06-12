@@ -24,6 +24,21 @@ const depositSchema = new mongoose.Schema(
       type: mongoose.Schema.Types.ObjectId,
       ref: 'User',
     },
+    // ZapUPI automatic payment fields
+    payment_method: {
+      type: String,
+      enum: ['manual', 'zapupi'],
+      default: 'manual',
+    },
+    zapupi_order_id: {
+      type: String,
+      default: null,
+      index: true,
+    },
+    zapupi_txn_id: {
+      type: String,
+      default: null,
+    },
   },
   {
     timestamps: true,

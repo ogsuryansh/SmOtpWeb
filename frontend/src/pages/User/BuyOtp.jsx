@@ -255,7 +255,7 @@ const BuyOtp = () => {
         const res = await api.otp.buyNumber(selectedService, selectedCountry, multiSms);
         if (res.success && isMounted) {
           setIsSearching(false);
-          refreshUser();
+          refreshUser(true);
           navigate('/dashboard');
         }
       } catch (err) {
@@ -307,10 +307,18 @@ const BuyOtp = () => {
       const dialCode = mappedByName ? mappedByName.dialCode : (mappedById ? mappedById.dialCode : code);
       const flag = mappedByName ? mappedByName.flag : (mappedById ? mappedById.flag : (toFlagEmoji(c.flag) || '🌐'));
 
+      const formatQty = (num) => {
+        if (num === null || num === undefined) return '';
+        if (num >= 1000) {
+          return (num / 1000).toFixed(1).replace(/\.0$/, '') + 'K qty';
+        }
+        return num + ' qty';
+      };
+
       return {
         value: code,
         label: name,
-        subLabel: `+${dialCode}`,
+        subLabel: c.qty != null ? formatQty(c.qty) : `+${dialCode}`,
         icon: flag,
         qty: c.qty ?? null,
         price: c.price ?? null,

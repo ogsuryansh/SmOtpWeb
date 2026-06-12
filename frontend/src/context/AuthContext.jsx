@@ -9,16 +9,16 @@ export const AuthProvider = ({ children }) => {
   const [error, setError] = useState(null);
 
   // Fetch current user details
-  const refreshUser = useCallback(async () => {
+  const refreshUser = useCallback(async (silent = false) => {
     const token = localStorage.getItem('token');
     if (!token) {
       setUser(null);
-      setLoading(false);
+      if (!silent) setLoading(false);
       return;
     }
 
     try {
-      setLoading(true);
+      if (!silent) setLoading(true);
       const res = await api.auth.getMe();
       if (res.success) {
         setUser(res.user);
@@ -31,7 +31,7 @@ export const AuthProvider = ({ children }) => {
       localStorage.removeItem('token');
       setUser(null);
     } finally {
-      setLoading(false);
+      if (!silent) setLoading(false);
     }
   }, []);
 

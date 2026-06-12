@@ -65,6 +65,9 @@ export const api = {
     paymentDetails: () => request('/deposits/payment-details'),
     submit: (formData) => request('/deposits', { method: 'POST', body: formData }),
     getHistory: () => request('/deposits'),
+    // ZapUPI automatic payment
+    zapupiCreateOrder: (amount) => request('/deposits/zapupi/create-order', { method: 'POST', body: { amount } }),
+    zapupiCheckStatus: (orderId) => request(`/deposits/zapupi/status/${orderId}`),
   },
 
   // OTP Purchasing & Active Polling

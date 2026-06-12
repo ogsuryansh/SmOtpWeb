@@ -162,20 +162,78 @@ export const sastaOtpService = {
 
       const apiKey = await getApiKey();
       try {
-        const servicesUrl = `${BASE_URL}?api_key=${apiKey}&action=getServicesList&format=json`;
-        const res = await fetchApi(servicesUrl);
-        const data = await res.json();
+        // Fetch sequentially with delay to prevent Cloudflare / SastaOTP 429 Too Many Requests
+        const cRes = await fetchApi(`${BASE_URL}?api_key=${apiKey}&action=getCountries&format=json`);
+        const cText = await cRes.text();
+        const cData = JSON.parse(cText);
+
+        // Wait 300ms to be safe before hitting the heavy getPrices endpoint
+        await new Promise(r => setTimeout(r, 300));
+
+        const pRes = await fetchApi(`${BASE_URL}?api_key=${apiKey}&action=getPrices&format=json`);
+        const pText = await pRes.text();
+        const pData = JSON.parse(pText);
         
-        if (data.status === 'OK' && data.services) {
+        if (pData.data) {
+            const countriesMap = cData.countries || {};
+            const pricesData = pData.data || {};
             const formatted = {};
-            for (const code in data.services) {
+            
+            // Initialize with allowed services to keep the list clean
+            allowedServices.forEach(code => {
                formatted[code] = {
                  code: code,
-                 name: data.services[code].name || SERVICE_NAMES[code] || code.toUpperCase(),
-                 price: data.services[code].price || 0,
-                 countries: [] // Will be populated when specific service is requested
+                 name: SERVICE_NAMES[code] || code.toUpperCase(),
+                 price: Infinity,
+                 countries: []
                };
+            });
+
+            // Populate countries
+            for (const countryId in pricesData) {
+                const countryServices = pricesData[countryId];
+                
+                let countryInfo = countriesMap[countryId];
+                let cName = countryInfo ? countryInfo.eng || countryInfo.name : `Country ${countryId}`;
+                let cFlag = countryInfo ? countryInfo.flag : '🌐';
+                let cCode = countryId;
+
+                if (countryId === 'any' || countryId === '*') {
+                    cName = 'Any Country';
+                    cCode = '*';
+                    cFlag = '🌐';
+                }
+
+                for (const srvCode in countryServices) {
+                    if (formatted[srvCode]) {
+                        const info = countryServices[srvCode];
+                        if (info.count > 0) {
+                            formatted[srvCode].countries.push({
+                                country_code: cCode,
+                                country_name: cName,
+                                flag: cFlag,
+                                price: info.cost,
+                                qty: info.count
+                            });
+                            
+                            if (info.cost < formatted[srvCode].price) {
+                                formatted[srvCode].price = info.cost;
+                            }
+                        }
+                    }
+                }
             }
+
+            // Cleanup & Sort
+            for (const code in formatted) {
+                if (formatted[code].price === Infinity) formatted[code].price = 0;
+                formatted[code].countries.sort((a, b) => {
+                  if (a.country_code === '22') return -1;
+                  if (b.country_code === '22') return 1;
+                  return a.country_name.localeCompare(b.country_name);
+                });
+            }
+
             CACHED_SERVICES = formatted;
             CACHED_SERVICES_TIME = now;
             return { status: 'OK', services: formatted, isMock: false };

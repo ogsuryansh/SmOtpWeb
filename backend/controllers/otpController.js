@@ -26,8 +26,8 @@ export const getServices = async (req, res, next) => {
       throw new Error(apiData.message || 'Failed to fetch services from provider');
     }
 
-    // Apply markup to services
-    const services = { ...apiData.services };
+    // Apply markup to services (DEEP CLONE to avoid mutating cache)
+    const services = JSON.parse(JSON.stringify(apiData.services));
     for (const key in services) {
       const srv = services[key];
       // Apply to main price
