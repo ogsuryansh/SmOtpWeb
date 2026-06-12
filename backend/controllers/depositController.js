@@ -124,6 +124,9 @@ export const createZapUpiOrder = async (req, res, next) => {
 
     // Build the webhook URL from the BACKEND_URL env var
     const webhookUrl = `${process.env.BACKEND_URL || `http://localhost:${process.env.PORT || 5000}`}/api/deposits/zapupi/webhook`;
+    
+    // Build the redirect URL for after payment
+    const redirectUrl = `${process.env.FRONTEND_URL || 'https://otpaddaa.shop'}/deposits`;
 
     // Call ZapUPI create-order API from the backend (key stays server-side)
     const response = await fetch('https://pay.zapupi.com/api/create-order', {
@@ -135,6 +138,7 @@ export const createZapUpiOrder = async (req, res, next) => {
         amount: String(numericAmount),
         remark: `Deposit | ${req.user.id}`,
         webhook_url: webhookUrl,
+        redirect_url: redirectUrl,
       }),
     });
 
