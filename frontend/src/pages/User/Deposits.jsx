@@ -230,6 +230,11 @@ const Deposits = () => {
                   onChange={(e) => setZapAmount(e.target.value)}
                   required
                 />
+                {zapAmount && !isNaN(parseFloat(zapAmount)) && (
+                  <div style={{ fontSize: '0.8rem', color: 'var(--text-secondary)', marginTop: '0.5rem', fontWeight: 500 }}>
+                    You will receive: <span style={{ color: 'var(--success)' }}>₹{(parseFloat(zapAmount) * 0.98).toFixed(2)}</span> (2% fee deducted)
+                  </div>
+                )}
               </div>
               <button
                 type="submit"
@@ -247,7 +252,7 @@ const Deposits = () => {
             </form>
 
             <div className="badge badge-primary w-full" style={{ padding: '0.75rem 1rem', textTransform: 'none', borderRadius: 'var(--border-radius-sm)', fontSize: '0.8rem', lineHeight: 1.5 }}>
-              ✅ Pay via any UPI app (GPay, PhonePe, Paytm etc.) — balance credited instantly after payment succeeds
+              ✅ Pay via any UPI app (GPay, PhonePe, Paytm etc.) — balance credited instantly after payment succeeds. Note: A 2% gateway fee is applied.
             </div>
           </div>
 

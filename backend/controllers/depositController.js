@@ -243,17 +243,22 @@ export const zapUpiWebhook = async (req, res) => {
       deposit.zapupi_txn_id = txn_id || null;
       await deposit.save();
 
+      // Calculate 2% fee
+      const feePercentage = 2;
+      const feeAmount = deposit.amount * (feePercentage / 100);
+      const netAmount = deposit.amount - feeAmount;
+
       // Credit user balance
       await User.findByIdAndUpdate(deposit.userId, {
-        $inc: { balance: deposit.amount },
+        $inc: { balance: netAmount },
       });
 
       // Create transaction record
       await Transaction.create({
         userId: deposit.userId,
-        amount: deposit.amount,
+        amount: netAmount,
         type: 'deposit',
-        description: `ZapUPI Auto Deposit - UTR ${utr || txn_id || 'N/A'}`,
+        description: `ZapUPI Auto Deposit - UTR ${utr || txn_id || 'N/A'} (Fee: ₹${feeAmount.toFixed(2)})`,
         referenceId: String(deposit._id),
       });
 
