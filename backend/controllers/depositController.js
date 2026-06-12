@@ -184,62 +184,75 @@ export const createZapUpiOrder = async (req, res, next) => {
 // @access  Public (no auth — called by ZapUPI server)
 export const zapUpiWebhook = async (req, res) => {
   try {
-    const { order_id, status, txn_id, amount, utr, environment } = req.body;
+    console.log('[ZapUPI Webhook] Received raw payload:', req.body);
+    
+    // ZapUPI might send the order ID as order_id or client_txn_id
+    const incomingOrderId = req.body.order_id || req.body.client_txn_id;
+    const { status, txn_id, amount, utr, environment } = req.body;
 
     // Only process orders created by THIS site (prefix check = no conflict with other websites)
-    if (!order_id || !order_id.startsWith('OTPADDAA_')) {
+    if (!incomingOrderId || !incomingOrderId.startsWith('OTPADDAA_')) {
+      console.log(`[ZapUPI Webhook] Ignored order without OTPADDAA_ prefix: ${incomingOrderId}`);
       return res.status(200).json({ status: 'ok' }); // ignore other site orders
     }
 
     // Skip test environment webhooks in production
     if (environment === 'test') {
+      console.log('[ZapUPI Webhook] Ignored test environment webhook');
       return res.status(200).json({ status: 'ok' });
     }
 
     if (!status) {
+      console.log('[ZapUPI Webhook] Ignored webhook missing status field');
       return res.status(200).json({ status: 'ok' });
     }
 
     // Find the pending deposit for this order
     const deposit = await Deposit.findOne({
-      zapupi_order_id: order_id,
+      zapupi_order_id: incomingOrderId,
       payment_method: 'zapupi',
     });
 
     if (!deposit) {
+      console.log(`[ZapUPI Webhook] Unknown order: ${incomingOrderId}`);
       // Unknown order — still respond 200 so ZapUPI doesn't retry
       return res.status(200).json({ status: 'ok' });
     }
 
     // Prevent double-processing
     if (deposit.status !== 'pending') {
+      console.log(`[ZapUPI Webhook] Order ${incomingOrderId} already processed (status: ${deposit.status})`);
       return res.status(200).json({ status: 'ok' });
     }
 
     if (status.toLowerCase() === 'success') {
+      console.log(`[ZapUPI Webhook] Double-confirming order ${incomingOrderId}...`);
       // Double-confirm via order-status API before crediting balance
       const confirmResp = await fetch('https://pay.zapupi.com/api/order-status', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           zap_key: process.env.ZAPUPI_KEY,
-          order_id,
+          order_id: incomingOrderId,
         }),
       });
       const confirmData = await confirmResp.json();
+      console.log(`[ZapUPI Webhook] Order-status response for ${incomingOrderId}:`, confirmData);
 
       if (
-        confirmData.status.toLowerCase() !== 'success' ||
+        confirmData.status?.toLowerCase() !== 'success' ||
         !confirmData.data ||
-        confirmData.data.status.toLowerCase() !== 'success'
+        confirmData.data.status?.toLowerCase() !== 'success'
       ) {
-        console.warn(`[ZapUPI Webhook] Could not double-confirm order: ${order_id}`);
+        console.warn(`[ZapUPI Webhook] Could not double-confirm order: ${incomingOrderId}`);
         return res.status(200).json({ status: 'ok' });
       }
 
+      console.log(`[ZapUPI Webhook] Order ${incomingOrderId} confirmed! Crediting user ${deposit.userId}`);
+
       // Update deposit to approved
       deposit.status = 'approved';
-      deposit.utr = utr || txn_id || order_id;
+      deposit.utr = utr || txn_id || incomingOrderId;
       deposit.zapupi_txn_id = txn_id || null;
       await deposit.save();
 
@@ -267,21 +280,23 @@ export const zapUpiWebhook = async (req, res) => {
         action: 'ZAPUPI_DEPOSIT_AUTO_APPROVED',
         details: {
           depositId: deposit._id,
-          orderId: order_id,
+          orderId: incomingOrderId,
           txnId: txn_id,
           utr,
           amount: deposit.amount,
         },
         userId: deposit.userId,
       });
+      console.log(`[ZapUPI Webhook] Successfully credited ₹${netAmount} to user ${deposit.userId}`);
     } else if (status.toLowerCase() === 'failed') {
+      console.log(`[ZapUPI Webhook] Order ${incomingOrderId} failed.`);
       deposit.status = 'rejected';
       deposit.zapupi_txn_id = txn_id || null;
       await deposit.save();
 
       await AuditLog.create({
         action: 'ZAPUPI_DEPOSIT_FAILED',
-        details: { depositId: deposit._id, orderId: order_id, txnId: txn_id },
+        details: { depositId: deposit._id, orderId: incomingOrderId, txnId: txn_id },
         userId: deposit.userId,
       });
     }
