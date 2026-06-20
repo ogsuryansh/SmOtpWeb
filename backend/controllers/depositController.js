@@ -253,7 +253,7 @@ export const zapUpiWebhook = async (req, res) => {
       console.log(`[ZapUPI Webhook] Order ${incomingOrderId} confirmed! Crediting user ${deposit.userId}`);
 
       // Update deposit to approved
-      deposit.status = 'approved';
+      deposit.status = 'auto_approved';
       deposit.utr = utr || txn_id || incomingOrderId;
       deposit.zapupi_txn_id = txn_id || null;
       await deposit.save();
@@ -346,6 +346,63 @@ export const checkZapUpiStatus = async (req, res, next) => {
 // @access  Private
 export const getDeposits = async (req, res, next) => {
   try {
+    // Before returning, check if any pending ZapUPI deposits need auto-approval (fallback for missed webhooks)
+    const pendingZapDeposits = await Deposit.find({ userId: req.user.id, status: 'pending', payment_method: 'zapupi' });
+    
+    if (pendingZapDeposits.length > 0 && process.env.ZAPUPI_KEY) {
+      let stateChanged = false;
+      for (const dep of pendingZapDeposits) {
+        try {
+          const confirmResp = await fetch('https://pay.zapupi.com/api/order-status', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              zap_key: process.env.ZAPUPI_KEY,
+              order_id: dep.zapupi_order_id,
+            }),
+          });
+          const confirmData = await confirmResp.json();
+          if (
+            confirmData.status?.toLowerCase() === 'success' &&
+            confirmData.data &&
+            confirmData.data.status?.toLowerCase() === 'success'
+          ) {
+            dep.status = 'auto_approved';
+            dep.utr = confirmData.data.txn_id || dep.zapupi_order_id;
+            dep.zapupi_txn_id = confirmData.data.txn_id || null;
+            await dep.save();
+
+            const feePercentage = 2;
+            const feeAmount = dep.amount * (feePercentage / 100);
+            const netAmount = dep.amount - feeAmount;
+
+            await User.findByIdAndUpdate(dep.userId, { $inc: { balance: netAmount } });
+
+            await Transaction.create({
+              userId: dep.userId,
+              amount: netAmount,
+              type: 'deposit',
+              description: `ZapUPI Auto Deposit - UTR ${dep.utr} (Fee: ₹${feeAmount.toFixed(2)})`,
+              referenceId: String(dep._id),
+            });
+
+            await AuditLog.create({
+              action: 'ZAPUPI_DEPOSIT_AUTO_APPROVED',
+              details: { depositId: dep._id, orderId: dep.zapupi_order_id, txnId: confirmData.data.txn_id, amount: dep.amount },
+              userId: dep.userId,
+            });
+            stateChanged = true;
+          } else if (confirmData.data && confirmData.data.status?.toLowerCase() === 'failed') {
+            dep.status = 'rejected';
+            await dep.save();
+            stateChanged = true;
+          }
+        } catch (err) {
+          console.error('[ZapUPI Fallback Check] Error:', err.message);
+        }
+      }
+    }
+
     const deposits = await Deposit.find({ userId: req.user.id })
       .sort({ createdAt: -1 });
 

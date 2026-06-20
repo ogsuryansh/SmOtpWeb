@@ -433,10 +433,10 @@ const Deposits = () => {
                       <td style={{ fontWeight: 700 }}>₹{dep.amount.toFixed(2)}</td>
                       <td>
                         <span className={`badge ${
-                          dep.status === 'approved' ? 'badge-success' :
+                          ['approved', 'auto_approved'].includes(dep.status) ? 'badge-success' :
                           dep.status === 'rejected' ? 'badge-danger' : 'badge-warning'
                         }`}>
-                          {dep.status}
+                          {dep.status === 'auto_approved' ? 'Auto Approved' : dep.status}
                         </span>
                       </td>
                       <td className="text-secondary" style={{ fontSize: '0.8rem' }}>

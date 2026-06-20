@@ -16,7 +16,7 @@ export const getStats = async (req, res, next) => {
     
     // Total deposits (approved)
     const approvedDeposits = await Deposit.aggregate([
-      { $match: { status: 'approved' } },
+      { $match: { status: { $in: ['approved', 'auto_approved'] } } },
       { $group: { _id: null, total: { $sum: '$amount' } } }
     ]);
     const totalDepositsVal = approvedDeposits[0]?.total || 0;

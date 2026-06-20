@@ -107,7 +107,7 @@ const AdminDeposits = () => {
 
       {/* Filter Tabs */}
       <div className="flex gap-1 m-b-2" style={{ flexWrap: 'wrap' }}>
-        {['pending', 'approved', 'rejected', 'all'].map((tab) => (
+        {['pending', 'approved', 'auto_approved', 'rejected', 'all'].map((tab) => (
           <button
             key={tab}
             className={`btn ${statusFilter === tab ? 'btn-primary' : 'btn-secondary'}`}
@@ -169,10 +169,10 @@ const AdminDeposits = () => {
                     </td>
                     <td>
                       <span className={`badge ${
-                        dep.status === 'approved' ? 'badge-success' :
+                        ['approved', 'auto_approved'].includes(dep.status) ? 'badge-success' :
                         dep.status === 'rejected' ? 'badge-danger' : 'badge-warning'
                       }`}>
-                        {dep.status}
+                        {dep.status === 'auto_approved' ? 'Auto Approved' : dep.status}
                       </span>
                     </td>
                     <td className="text-secondary" style={{ fontSize: '0.8rem' }}>
