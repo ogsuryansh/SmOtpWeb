@@ -464,46 +464,45 @@ const Home = () => {
             <div>
               <div className="trust-badge">
                 <Shield size={14} color="#0ea5e9" />
-                <span>OTPAddaa - Trusted by 500,000+ users</span>
-                <span style={{ color: '#eab308', fontSize: '0.8rem', marginLeft: '4px' }}>★★★★★</span>
+                <span>OTPAddaa - Enterprise Communications Platform</span>
               </div>
               
               <h1 className="hero-h1">
-                Instant SMS<br />
-                <span className="highlight">Verification</span>
+                Global Communications<br />
+                <span className="highlight">Infrastructure</span>
               </h1>
               
               <p className="hero-subtitle">
-                Get virtual phone numbers from 180+ countries for secure SMS verification. Fast, reliable, and completely private.
+                Build scalable authentication and messaging flows with our robust API. Connect globally with secure, programmable communications.
               </p>
               
               <div className="features-grid-hero">
                 <div className="feature-chip">
                   <div className="feature-icon-wrapper"><Zap size={18} /></div>
                   <div className="feature-text">
-                    <h4>Instant Delivery</h4>
-                    <p>Get SMS in seconds</p>
+                    <h4>Low Latency API</h4>
+                    <p>&lt; 50ms response</p>
                   </div>
                 </div>
                 <div className="feature-chip">
                   <div className="feature-icon-wrapper"><Globe size={18} /></div>
                   <div className="feature-text">
-                    <h4>180+ Countries</h4>
-                    <p>Global coverage</p>
+                    <h4>180+ Regions</h4>
+                    <p>Direct carrier routing</p>
                   </div>
                 </div>
                 <div className="feature-chip">
                   <div className="feature-icon-wrapper"><Clock size={18} /></div>
                   <div className="feature-text">
-                    <h4>24/7 Available</h4>
-                    <p>Always online</p>
+                    <h4>99.99% SLA</h4>
+                    <p>Enterprise reliability</p>
                   </div>
                 </div>
                 <div className="feature-chip">
                   <div className="feature-icon-wrapper"><Lock size={18} /></div>
                   <div className="feature-text">
-                    <h4>100% Private</h4>
-                    <p>No data stored</p>
+                    <h4>Compliance First</h4>
+                    <p>SOC2 & GDPR Ready</p>
                   </div>
                 </div>
               </div>
@@ -523,8 +522,8 @@ const Home = () => {
               </div>
               
               <div className="check-list">
-                <div className="check-item"><CheckCircle2 size={16} className="check-item-icon" /> Instant activation</div>
-                <div className="check-item"><CheckCircle2 size={16} className="check-item-icon" /> Secure & anonymous</div>
+                <div className="check-item"><CheckCircle2 size={16} className="check-item-icon" /> API-first design</div>
+                <div className="check-item"><CheckCircle2 size={16} className="check-item-icon" /> End-to-end encryption</div>
               </div>
             </div>
 
@@ -537,18 +536,18 @@ const Home = () => {
                   <Check size={16} color="#10b981" />
                 </div>
                 <div>
-                  <div style={{ fontSize: '0.75rem', color: '#94a3b8' }}>Success Rate</div>
-                  <div style={{ fontSize: '1rem', fontWeight: 700 }}>99.9%</div>
+                  <div style={{ fontSize: '0.75rem', color: '#94a3b8' }}>API Uptime</div>
+                  <div style={{ fontSize: '1rem', fontWeight: 700 }}>99.99%</div>
                 </div>
               </div>
               
               <div className="floating-badge fb-2">
                 <div style={{ background: 'rgba(14, 165, 233, 0.2)', padding: '6px', borderRadius: '8px' }}>
-                  <Smartphone size={16} color="#0ea5e9" />
+                  <Server size={16} color="#0ea5e9" />
                 </div>
                 <div>
-                  <div style={{ fontSize: '0.75rem', color: '#94a3b8' }}>Numbers Delivered</div>
-                  <div style={{ fontSize: '1rem', fontWeight: 700 }}>1M+</div>
+                  <div style={{ fontSize: '0.75rem', color: '#94a3b8' }}>API Requests</div>
+                  <div style={{ fontSize: '1rem', fontWeight: 700 }}>1B+</div>
                 </div>
               </div>
 
@@ -569,33 +568,36 @@ const Home = () => {
                 </div>
                 
                 <div className="phone-content">
-                  <div className="app-icon">
-                    <MessageCircle size={28} />
+                  <div className="app-icon" style={{ background: '#1e293b', border: '1px solid rgba(255,255,255,0.1)' }}>
+                    <Cpu size={28} color="#0ea5e9" />
                   </div>
-                  <h3 style={{ color: '#fff', fontSize: '1.1rem', margin: 0 }}>SMS Verification</h3>
-                  <p style={{ color: '#94a3b8', fontSize: '0.8rem', margin: '0.2rem 0 0' }}>+1 (555) 123-4567</p>
+                  <h3 style={{ color: '#fff', fontSize: '1.1rem', margin: 0 }}>API Webhook Monitor</h3>
+                  <p style={{ color: '#94a3b8', fontSize: '0.8rem', margin: '0.2rem 0 0' }}>Endpoint: /v1/auth/verify</p>
                   
-                  <div className="verification-box">
-                    <p style={{ color: '#94a3b8', fontSize: '0.8rem', margin: '0 0 0.5rem' }}>Your verification code is:</p>
-                    <div style={{ fontSize: '2.2rem', fontWeight: 800, color: '#0ea5e9', letterSpacing: '2px', fontFamily: 'var(--font-display, monospace)' }}>
-                      247834
+                  <div className="verification-box" style={{ textAlign: 'left' }}>
+                    <p style={{ color: '#94a3b8', fontSize: '0.8rem', margin: '0 0 0.5rem', fontFamily: 'monospace' }}>POST /messages</p>
+                    <div style={{ fontSize: '0.9rem', color: '#10b981', fontFamily: 'var(--font-display, monospace)' }}>
+                      &#123;<br/>
+                      &nbsp;&nbsp;"status": 200,<br/>
+                      &nbsp;&nbsp;"message": "delivered",<br/>
+                      &nbsp;&nbsp;"latency": "42ms"<br/>
+                      &#125;
                     </div>
-                    <p style={{ color: '#64748b', fontSize: '0.7rem', margin: '0.5rem 0 0' }}>Valid for 10 minutes</p>
                   </div>
                   
                   <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.4rem', color: '#10b981', fontSize: '0.8rem', marginTop: '1rem' }}>
                     <CheckCircle2 size={14} />
-                    <span>Code received instantly</span>
+                    <span>Webhook triggered successfully</span>
                   </div>
                   
                   <div style={{ 
                     marginTop: 'auto', background: '#1e293b', borderRadius: '12px', padding: '1rem', 
                     display: 'flex', gap: '0.8rem', alignItems: 'center', border: '1px solid rgba(255, 255, 255, 0.05)'
                   }}>
-                    <Globe size={18} color="#94a3b8" />
+                    <Server size={18} color="#94a3b8" />
                     <div style={{ textAlign: 'left' }}>
-                      <div style={{ fontSize: '0.7rem', color: '#94a3b8' }}>OTPAddaa App</div>
-                      <div style={{ fontSize: '0.85rem', color: '#fff', fontWeight: 600 }}>Your OTP code: <span style={{ color: '#0ea5e9' }}>582-914</span></div>
+                      <div style={{ fontSize: '0.7rem', color: '#94a3b8' }}>System Status</div>
+                      <div style={{ fontSize: '0.85rem', color: '#fff', fontWeight: 600 }}>All services <span style={{ color: '#10b981' }}>operational</span></div>
                     </div>
                   </div>
                 </div>
@@ -603,23 +605,22 @@ const Home = () => {
             </div>
           </div>
           
-          {/* Stats Bar */}
           <div className="stats-bar">
             <div className="stat-item">
-              <div className="stat-value">50K+</div>
-              <div className="stat-label">Active Users</div>
+              <div className="stat-value">10K+</div>
+              <div className="stat-label">Developers</div>
             </div>
             <div className="stat-item">
               <div className="stat-value">180+</div>
-              <div className="stat-label">Countries</div>
+              <div className="stat-label">Carrier Routes</div>
             </div>
             <div className="stat-item">
-              <div className="stat-value">99.9%</div>
+              <div className="stat-value">99.99%</div>
               <div className="stat-label">Uptime</div>
             </div>
             <div className="stat-item">
               <div className="stat-value">24/7</div>
-              <div className="stat-label">Support</div>
+              <div className="stat-label">Tech Support</div>
             </div>
           </div>
         </section>
@@ -631,9 +632,9 @@ const Home = () => {
           <section id="services" style={{ padding: '4rem 0' }}>
             <div style={{ textAlign: 'center', marginBottom: '3rem' }}>
               <h2 style={{ fontSize: '2.2rem', fontFamily: 'var(--font-display)', marginBottom: '0.5rem', color: '#ffffff' }}>
-                Supported Services
+                Supported Integrations
               </h2>
-              <p style={{ color: '#94a3b8' }}>Low-cost temporary lines starting from just ₹5.00 per code</p>
+              <p style={{ color: '#94a3b8' }}>Seamlessly integrate with major platforms for robust Multi-Factor Authentication (MFA).</p>
             </div>
 
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: '1.5rem' }}>
@@ -675,7 +676,7 @@ const Home = () => {
               <h2 style={{ fontSize: '2.2rem', fontFamily: 'var(--font-display)', marginBottom: '0.5rem', color: '#ffffff' }}>
                 Platform Benefits
               </h2>
-              <p style={{ color: '#94a3b8' }}>Engineered to provide instant, stress-free authentication</p>
+              <p style={{ color: '#94a3b8' }}>Engineered to provide instant, stress-free API integration</p>
             </div>
 
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(250px, 1fr))', gap: '1.5rem' }}>
@@ -683,9 +684,9 @@ const Home = () => {
                 <div style={{ width: '40px', height: '40px', borderRadius: '10px', backgroundColor: 'rgba(14, 165, 233, 0.1)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#0ea5e9', marginBottom: '1rem' }}>
                   <Smartphone size={20} />
                 </div>
-                <h3 style={{ fontSize: '1.1rem', fontWeight: 600, color: '#f8fafc', marginBottom: '0.5rem' }}>Instant Setup Lines</h3>
+                <h3 style={{ fontSize: '1.1rem', fontWeight: 600, color: '#f8fafc', marginBottom: '0.5rem' }}>Programmable Numbers</h3>
                 <p style={{ color: '#94a3b8', fontSize: '0.9rem', lineHeight: '1.6', margin: 0 }}>
-                  Reserve temporary lines within clicks. The reserved SIM is activated in real-time, waiting for your verification token code.
+                  Deploy cloud numbers instantly via API for two-way messaging and automated workflows. Manage your inventory programmatically.
                 </p>
               </div>
 
@@ -693,9 +694,9 @@ const Home = () => {
                 <div style={{ width: '40px', height: '40px', borderRadius: '10px', backgroundColor: 'rgba(16, 185, 129, 0.1)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#10b981', marginBottom: '1rem' }}>
                   <RefreshCw size={20} />
                 </div>
-                <h3 style={{ fontSize: '1.1rem', fontWeight: 600, color: '#f8fafc', marginBottom: '0.5rem' }}>No SMS, Instant Refunds</h3>
+                <h3 style={{ fontSize: '1.1rem', fontWeight: 600, color: '#f8fafc', marginBottom: '0.5rem' }}>Pay-as-you-go Pricing</h3>
                 <p style={{ color: '#94a3b8', fontSize: '0.9rem', lineHeight: '1.6', margin: 0 }}>
-                  Don't waste funds on dry lines. If an SMS is not delivered, cancel the order manually or let it expire to get all your balance refunded automatically.
+                  Only pay for successful requests. Transparent pricing with auto-scaling to match your business needs. No hidden minimums.
                 </p>
               </div>
 
@@ -703,9 +704,9 @@ const Home = () => {
                 <div style={{ width: '40px', height: '40px', borderRadius: '10px', backgroundColor: 'rgba(234, 179, 8, 0.1)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#eab308', marginBottom: '1rem' }}>
                   <Globe2 size={20} />
                 </div>
-                <h3 style={{ fontSize: '1.1rem', fontWeight: 600, color: '#f8fafc', marginBottom: '0.5rem' }}>Global Carrier Network</h3>
+                <h3 style={{ fontSize: '1.1rem', fontWeight: 600, color: '#f8fafc', marginBottom: '0.5rem' }}>Direct Carrier Routing</h3>
                 <p style={{ color: '#94a3b8', fontSize: '0.9rem', lineHeight: '1.6', margin: 0 }}>
-                  Avoid geographical blockers. Purchase virtual lines from 180+ global regions including India, USA, and UK.
+                  Benefit from our direct relationships with Tier-1 carriers ensuring high deliverability rates across 180+ global regions.
                 </p>
               </div>
 
@@ -713,9 +714,9 @@ const Home = () => {
                 <div style={{ width: '40px', height: '40px', borderRadius: '10px', backgroundColor: 'rgba(239, 68, 68, 0.1)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#ef4444', marginBottom: '1rem' }}>
                   <ShieldCheck size={20} />
                 </div>
-                <h3 style={{ fontSize: '1.1rem', fontWeight: 600, color: '#f8fafc', marginBottom: '0.5rem' }}>Audit Ledger Security</h3>
+                <h3 style={{ fontSize: '1.1rem', fontWeight: 600, color: '#f8fafc', marginBottom: '0.5rem' }}>Enterprise Security</h3>
                 <p style={{ color: '#94a3b8', fontSize: '0.9rem', lineHeight: '1.6', margin: 0 }}>
-                  Full security and logging. Double hashing for passwords, token security, and comprehensive ledgers keep your wallet transactions traceably secure.
+                  Comprehensive audit logs, role-based access control, and end-to-end encryption for all data in transit. Built for compliance.
                 </p>
               </div>
             </div>
@@ -730,26 +731,26 @@ const Home = () => {
             <div style={{ textAlign: 'center', marginBottom: '4rem' }}>
               <div style={{ display: 'inline-flex', alignItems: 'center', gap: '0.5rem', background: 'rgba(30, 41, 59, 0.7)', border: '1px solid rgba(16, 185, 129, 0.2)', padding: '0.4rem 1rem', borderRadius: '50px', fontSize: '0.85rem', color: '#94a3b8', marginBottom: '1.5rem', backdropFilter: 'blur(4px)' }}>
                 <Shield size={14} color="#10b981" />
-                <span>Security &amp; Privacy</span>
+                <span>Enterprise-Grade Infrastructure</span>
               </div>
               
               <h2 style={{ fontSize: '2.5rem', fontFamily: 'var(--font-display, sans-serif)', fontWeight: 800, marginBottom: '1rem', letterSpacing: '-0.02em', color: '#ffffff' }}>
-                Why <span style={{ color: '#10b981' }}>Trust Us</span>
+                Built for <span style={{ color: '#10b981' }}>Scale & Security</span>
               </h2>
               
               <p style={{ color: '#94a3b8', fontSize: '1rem', maxWidth: '600px', margin: '0 auto', lineHeight: '1.6' }}>
-                Your security and privacy are our top priorities. Here's how we keep you safe.
+                Your data security and platform reliability are our top priorities. Here's how we keep your integrations running flawlessly.
               </p>
             </div>
 
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(320px, 1fr))', gap: '1.5rem', marginBottom: '4rem' }}>
               {[
-                { icon: Shield, title: 'Bank-Level Security', desc: 'Your data is protected with 256-bit SSL encryption, the same security used by major banks.' },
-                { icon: Lock, title: 'No Data Storage', desc: 'We never store your personal information. Numbers are temporary and completely anonymous.' },
-                { icon: Eye, title: 'Privacy First', desc: 'Your identity stays completely private.' },
-                { icon: Fingerprint, title: 'Anonymous Payments', desc: 'Support for cryptocurrency payments for complete anonymity.' },
-                { icon: Server, title: '99.9% Uptime', desc: 'Our infrastructure is built for reliability with multiple redundancy layers.' },
-                { icon: CheckCircle2, title: 'Verified Provider', desc: 'Trusted by over 50,000 users worldwide with excellent reviews.' },
+                { icon: Shield, title: 'Bank-Level Security', desc: 'Your data is protected with 256-bit SSL encryption, the same security used by major financial institutions.' },
+                { icon: Lock, title: 'Data Minimization', desc: 'We adhere to strict data retention policies to ensure compliance and data minimization.' },
+                { icon: Eye, title: 'Compliance Ready', desc: 'Built to meet stringent global regulatory standards.' },
+                { icon: Fingerprint, title: 'Secure Authentication', desc: 'Support for modern auth flows including OAuth and SAML.' },
+                { icon: Server, title: '99.99% Uptime', desc: 'Our infrastructure is built for reliability with multiple redundancy layers.' },
+                { icon: CheckCircle2, title: 'Verified Provider', desc: 'Trusted by over 10,000 developers worldwide with enterprise SLAs.' },
               ].map((feature, idx) => (
                 <div key={idx} style={{ background: '#1e293b', border: '1px solid rgba(255, 255, 255, 0.05)', borderRadius: '16px', padding: '1.8rem', transition: 'transform 0.2s', cursor: 'default' }}
                      onMouseEnter={e => e.currentTarget.style.transform = 'translateY(-4px)'}
@@ -810,7 +811,7 @@ const Home = () => {
               />
               <span style={{ fontWeight: 800, color: '#ffffff' }}>OTPAddaa</span>
             </div>
-            <p style={{ maxWidth: '300px', fontSize: '0.85rem', color: '#64748b' }}>Secure temporary virtual numbers for seamless online verifications worldwide.</p>
+            <p style={{ maxWidth: '300px', fontSize: '0.85rem', color: '#64748b' }}>Enterprise cloud communications platform powering scalable messaging and authentication flows globally.</p>
           </div>
           
           <div className="flex gap-2" style={{ gap: '3rem' }}>
