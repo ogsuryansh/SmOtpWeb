@@ -920,12 +920,6 @@ p {
   h2 {
     font-size: 1.1rem;
   }
-
-  /* Dashboard welcome bar: stack vertically */
-  .flex.justify-between.align-center {
-    flex-direction: column;
-    align-items: flex-start;
-  }
 }
 
 /* Buttons: full-width stacking on very small screens */
@@ -962,9 +956,10 @@ p {
   }
 }
 
-/* Deposit / BuyOtp grid: full-width stack on mobile */
+/* Utility class for dashboard content grids that should stack on mobile.
+   Apply class="content-grid-auto" to the grid divs inside dashboard pages. */
 @media (max-width: 640px) {
-  [style*="grid-template-columns: repeat(auto-fit"] {
+  .content-grid-auto {
     display: flex !important;
     flex-direction: column !important;
   }
