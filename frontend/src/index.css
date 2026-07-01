@@ -843,5 +843,168 @@ p {
 .flex-column { flex-direction: column; }
 .w-full { width: 100%; }
 .text-center { text-align: center; }
+.m-t-1 { margin-top: 1rem; }
 .m-t-2 { margin-top: 2rem; }
 .m-b-2 { margin-bottom: 2rem; }
+.text-secondary { color: var(--text-secondary); }
+
+/* =========================================
+   MOBILE RESPONSIVE OVERRIDES
+   ========================================= */
+
+/* Cards: reduce padding on small screens */
+@media (max-width: 576px) {
+  .card {
+    padding: 1.25rem;
+    border-radius: var(--border-radius-sm);
+  }
+
+  .card:hover {
+    transform: none; /* Disable lift effect on touch */
+  }
+
+  .card-title {
+    font-size: 1.1rem;
+    margin-bottom: 1rem;
+  }
+}
+
+/* Stats grid: single column on mobile */
+@media (max-width: 640px) {
+  .stats-grid {
+    grid-template-columns: 1fr;
+    gap: 1rem;
+    margin-bottom: 1.5rem;
+  }
+
+  .stat-info p {
+    font-size: 1.8rem;
+  }
+}
+
+/* Active orders: single column on mobile */
+@media (max-width: 640px) {
+  .active-orders-grid {
+    grid-template-columns: 1fr;
+    gap: 1rem;
+  }
+
+  .order-number {
+    font-size: 1.2rem;
+  }
+
+  .otp-code {
+    font-size: 1.8rem;
+  }
+}
+
+/* Tables: make them scroll horizontally and shrink text */
+@media (max-width: 768px) {
+  .table th,
+  .table td {
+    padding: 0.8rem 0.75rem;
+    font-size: 0.8rem;
+  }
+
+  .table th {
+    font-size: 0.65rem;
+  }
+}
+
+/* Page headings on mobile */
+@media (max-width: 576px) {
+  h1 {
+    font-size: 1.6rem !important;
+  }
+
+  h2 {
+    font-size: 1.1rem;
+  }
+
+  /* Dashboard welcome bar: stack vertically */
+  .flex.justify-between.align-center {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+}
+
+/* Buttons: full-width stacking on very small screens */
+@media (max-width: 400px) {
+  .btn {
+    padding: 0.75rem 1.25rem;
+    font-size: 0.88rem;
+  }
+
+  .btn-lg {
+    width: 100%;
+  }
+}
+
+/* Header wallet pill: hide balance label text on tiny screens */
+@media (max-width: 380px) {
+  .wallet-pill span {
+    display: none;
+  }
+
+  .wallet-pill {
+    padding: 0.6rem;
+    border-radius: 50%;
+  }
+}
+
+/* Floating Telegram button: smaller on mobile */
+@media (max-width: 576px) {
+  .floating-telegram-btn {
+    width: 50px;
+    height: 50px;
+    bottom: 1.25rem;
+    right: 1.25rem;
+  }
+}
+
+/* Deposit / BuyOtp grid: full-width stack on mobile */
+@media (max-width: 640px) {
+  [style*="grid-template-columns: repeat(auto-fit"] {
+    display: flex !important;
+    flex-direction: column !important;
+  }
+}
+
+/* Modal: ensure modals fit on small screens */
+@media (max-width: 576px) {
+  .modal-content {
+    padding: 1.5rem;
+    border-radius: var(--border-radius-md);
+  }
+}
+
+/* Landing hero adjustments */
+@media (max-width: 576px) {
+  .landing-hero {
+    padding: 4rem 1.25rem;
+    gap: 1.25rem;
+  }
+
+  .landing-subtitle {
+    font-size: 1rem;
+  }
+
+  .landing-features {
+    grid-template-columns: 1fr;
+    gap: 1rem;
+    padding: 2rem 0;
+  }
+}
+
+/* Profile / History: shrink form groups on mobile */
+@media (max-width: 576px) {
+  .form-group {
+    margin-bottom: 1rem;
+  }
+
+  .form-control {
+    padding: 0.75rem 0.9rem;
+    font-size: 0.9rem;
+  }
+}
+
