@@ -154,6 +154,50 @@ const Home = () => {
             }
           }
 
+          /* ── Mobile hero overrides ── */
+          @media (max-width: 600px) {
+            .dark-hero-section {
+              padding: 3rem 1.25rem 2rem;
+            }
+
+            .trust-badge {
+              font-size: 0.72rem;
+              padding: 0.3rem 0.75rem;
+              margin-bottom: 1rem;
+            }
+
+            .hero-h1 {
+              font-size: 2rem;
+              margin-bottom: 1rem;
+            }
+
+            .hero-subtitle {
+              font-size: 0.9rem;
+              margin-bottom: 1.5rem;
+              max-width: 100%;
+            }
+
+            .features-grid-hero {
+              grid-template-columns: 1fr;
+              gap: 0.65rem;
+              margin-bottom: 1.5rem;
+            }
+
+            .feature-chip {
+              padding: 0.65rem 0.85rem;
+            }
+
+            .cta-group {
+              gap: 0.65rem;
+              margin-bottom: 1.25rem;
+            }
+
+            .check-list {
+              gap: 1rem;
+              font-size: 0.8rem;
+            }
+          }
+
           .trust-badge {
             display: inline-flex;
             align-items: center;
