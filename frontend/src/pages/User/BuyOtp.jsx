@@ -178,7 +178,7 @@ const BuyOtp = () => {
   // Attempt System State
   const [isSearching, setIsSearching] = useState(false);
   const [searchAttempt, setSearchAttempt] = useState(0);
-  const searchMaxAttempts = 600;
+  const searchMaxAttempts = 1;
 
   window.rawServices = rawServices;
   window.selectedService = selectedService;

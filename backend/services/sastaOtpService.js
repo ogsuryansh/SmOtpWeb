@@ -424,7 +424,7 @@ export const sastaOtpService = {
 
       let data;
       let text;
-      let maxAttempts = 5;
+      let maxAttempts = 2;
       
       for (let attempt = 1; attempt <= maxAttempts; attempt++) {
         try {
