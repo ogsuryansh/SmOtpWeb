@@ -420,13 +420,20 @@ export const sastaOtpService = {
 
       await logApiCall('getNumber', params, data, false);
 
-      if (data.status === 'ERROR' || data.error) {
-        throw new Error(data.error || data.message || 'API_ERROR');
-      }
-
       // Check standard error codes returned as fields or root strings
       if (typeof data === 'string') {
         throw new Error(data); // Legacy error codes
+      }
+
+      if (data.status === 'ERROR' || data.error) {
+        const errorMsg = data.error || data.message || 'API_ERROR';
+        if (errorMsg.includes('WRONG_MAX_PRICE') || errorMsg.includes('OPERATION_NOT_AVAILABLE') || errorMsg.includes('NO_NUMBERS')) {
+            throw new Error('Numbers are currently out of stock for this country/service. Please try again later.');
+        }
+        if (errorMsg.includes('NO_BALANCE')) {
+            throw new Error('System balance is low. Please contact support.');
+        }
+        throw new Error(errorMsg);
       }
 
       return data;

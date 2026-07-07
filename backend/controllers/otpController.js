@@ -142,7 +142,7 @@ export const buyNumber = async (req, res, next) => {
       await User.findByIdAndUpdate(req.user.id, { $inc: { balance: finalPrice } });
       
       res.status(400);
-      throw new Error('This country or service is not available, try something else');
+      throw new Error(`Failed to purchase number: ${apiError.message || 'Service unavailable'}`);
     }
 
     // 4. Create Order & Log transaction
