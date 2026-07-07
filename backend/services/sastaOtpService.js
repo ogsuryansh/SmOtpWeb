@@ -103,6 +103,8 @@ const mockActivations = new Map(); // Store simulated orders in memory
 
 let CACHED_SERVICES = null;
 let CACHED_SERVICES_TIME = 0;
+let CACHED_SERVICES_LIST = null;
+let CACHED_SERVICES_LIST_TIME = 0;
 
 export const sastaOtpService = {
   // Check if API is in Mock Mode
@@ -153,10 +155,39 @@ export const sastaOtpService = {
       we: 'Weibo', qq: 'QQ', bl: 'Bigo Live', dr: 'Tinder',
     };
 
-    // HIGH-SPEED OPTIMIZATION: Return static list of allowed services instantly.
-    // The huge bulk fetch of getPrices takes >30s on SastaOTP, so we bypass it.
-    // The frontend will dynamically fetch specific countries for a service when selected.
+    // HIGH-SPEED OPTIMIZATION: Fetch lightweight services list and cache for 5 minutes.
     if (!serviceCode) {
+      const now = Date.now();
+      if (CACHED_SERVICES_LIST && (now - CACHED_SERVICES_LIST_TIME < 5 * 60 * 1000)) {
+        return { status: 'OK', services: CACHED_SERVICES_LIST, isMock: false };
+      }
+
+      const apiKey = await getApiKey();
+      try {
+        const res = await fetchApi(`${BASE_URL}?api_key=${apiKey}&action=getServicesList&format=json`);
+        const data = await res.json();
+        
+        if (data.status === 'OK' && data.services) {
+          const formatted = {};
+          for (const key in data.services) {
+            const svc = data.services[key];
+            formatted[svc.code] = {
+              code: svc.code,
+              name: svc.name || SERVICE_NAMES[svc.code] || svc.code.toUpperCase(),
+              price: svc.price || 0,
+              countries: []
+            };
+          }
+          
+          CACHED_SERVICES_LIST = formatted;
+          CACHED_SERVICES_LIST_TIME = now;
+          return { status: 'OK', services: formatted, isMock: false };
+        }
+      } catch (err) {
+        console.error('Failed to fetch getServicesList, falling back to static list:', err.message);
+      }
+
+      // Fallback
       const initServices = {};
       allowedServices.forEach(code => {
         initServices[code] = {
