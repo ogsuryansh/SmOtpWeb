@@ -209,8 +209,39 @@ const BuyOtp = () => {
     })();
   }, []);
 
-  // We already have all countries and prices for all services from the initial load.
-  // No need to re-fetch when selecting a service.
+  // Fetch countries and prices for selected service dynamically
+  useEffect(() => {
+    if (!selectedService || isMock) return;
+
+    let isMounted = true;
+    (async () => {
+      try {
+        setCountriesLoading(true);
+        const res = await api.otp.getServices(selectedService);
+        if (res.success) {
+          if (res.services[selectedService]) {
+            setRawServices(prev => ({
+              ...prev,
+              [selectedService]: res.services[selectedService]
+            }));
+          } else {
+            setError(`Debug: res.services[${selectedService}] is undefined! Keys: ` + Object.keys(res.services || {}).join(','));
+          }
+        }
+      } catch (err) {
+        console.error('Failed to load country prices for service:', selectedService, err);
+        if (isMounted) setError(`Failed to load countries: ${err.message}`);
+      } finally {
+        if (isMounted) {
+          setCountriesLoading(false);
+        }
+      }
+    })();
+
+    return () => {
+      isMounted = false;
+    };
+  }, [selectedService, isMock]);
 
   // ── Polling System (Attempt loop) ─────────────────────────────────────────
   useEffect(() => {
