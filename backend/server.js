@@ -39,6 +39,7 @@ if (process.env.FRONTEND_URL) {
 
 // Add No-Cache headers to prevent Vercel Edge from caching CORS responses for different origins
 app.use((req, res, next) => {
+  res.header('Vary', 'Origin');
   res.header('Cache-Control', 'no-store, no-cache, must-revalidate, proxy-revalidate');
   res.header('Pragma', 'no-cache');
   res.header('Expires', '0');
@@ -46,7 +47,13 @@ app.use((req, res, next) => {
 });
 
 app.use(cors({
-  origin: allowedOrigins,
+  origin: function (origin, callback) {
+    if (!origin || allowedOrigins.includes(origin)) {
+      callback(null, origin || true);
+    } else {
+      callback(new Error('Not allowed by CORS'));
+    }
+  },
   credentials: true
 }));
 app.use(express.json());
