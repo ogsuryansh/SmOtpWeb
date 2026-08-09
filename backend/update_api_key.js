@@ -25,10 +25,10 @@ async function run() {
     );
     console.log('API Key updated in database to: ' + newKey);
 
-    // Ensure URL is set to 247otp
+    // Ensure URL is set to sastaotp
     await Setting.findOneAndUpdate(
       { key: 'otpProviderUrl' },
-      { value: 'https://api.247otp.com/stubs/handler_api.php' },
+      { value: 'https://sastaotp.com/stubs/handler_api.php' },
       { upsert: true }
     );
 
