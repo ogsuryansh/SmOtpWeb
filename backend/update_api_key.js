@@ -25,10 +25,10 @@ async function run() {
     );
     console.log('API Key updated in database to: ' + newKey);
 
-    // Ensure URL is set to sastaotp
+    // Ensure URL is set to 247OTP Supabase backend
     await Setting.findOneAndUpdate(
       { key: 'otpProviderUrl' },
-      { value: 'https://sastaotp.com/stubs/handler_api.php' },
+      { value: 'https://mxfkruqagyqgvvcwezkx.supabase.co/functions/v1/handler-api' },
       { upsert: true }
     );
 

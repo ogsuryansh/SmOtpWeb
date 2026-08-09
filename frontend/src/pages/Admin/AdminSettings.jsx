@@ -6,7 +6,7 @@ const AdminSettings = () => {
   const [settings, setSettings] = useState({
     siteName: '',
     otpApiKey: '',
-    otpProviderUrl: 'https://api.247otp.com/stubs/handler_api.php',
+    otpProviderUrl: 'https://mxfkruqagyqgvvcwezkx.supabase.co/functions/v1/handler-api',
     sastaOtpApiKey: '',
     markupPercentage: '',
     minDeposit: '',
@@ -202,15 +202,15 @@ const AdminSettings = () => {
                     id="otpProviderUrl"
                     name="otpProviderUrl"
                     className="form-control"
-                    placeholder="https://api.247otp.com/stubs/handler_api.php"
-                    value={settings.otpProviderUrl || 'https://api.247otp.com/stubs/handler_api.php'}
+                    placeholder="https://mxfkruqagyqgvvcwezkx.supabase.co/functions/v1/handler-api"
+                    value={settings.otpProviderUrl || 'https://mxfkruqagyqgvvcwezkx.supabase.co/functions/v1/handler-api'}
                     onChange={handleChange}
                   />
                   <div style={{ display: 'flex', gap: '0.5rem', marginTop: '0.5rem' }}>
                     <button
                       type="button"
                       className="btn btn-secondary btn-sm"
-                      onClick={() => setSettings(prev => ({ ...prev, otpProviderUrl: 'https://api.247otp.com/stubs/handler_api.php' }))}
+                      onClick={() => setSettings(prev => ({ ...prev, otpProviderUrl: 'https://mxfkruqagyqgvvcwezkx.supabase.co/functions/v1/handler-api' }))}
                       style={{ fontSize: '0.75rem', padding: '0.25rem 0.5rem' }}
                     >
                       ⚡ Use 247OTP.com Endpoint
