@@ -4,7 +4,8 @@ import OTPOrder from '../models/OTPOrder.js';
 import Transaction from '../models/Transaction.js';
 import Setting from '../models/Setting.js';
 import AuditLog from '../models/AuditLog.js';
-import { sastaOtpService } from '../services/sastaOtpService.js';
+import { otpService } from '../services/otpService.js';
+const sastaOtpService = otpService;
 
 // @desc    Get Admin Panel dashboard statistics
 // @route   GET /api/admin/stats

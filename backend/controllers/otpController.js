@@ -3,7 +3,8 @@ import User from '../models/User.js';
 import Setting from '../models/Setting.js';
 import Transaction from '../models/Transaction.js';
 import AuditLog from '../models/AuditLog.js';
-import { sastaOtpService } from '../services/sastaOtpService.js';
+import { otpService } from '../services/otpService.js';
+const sastaOtpService = otpService;
 
 // Helper to get system markup
 async function getMarkupPercentage() {

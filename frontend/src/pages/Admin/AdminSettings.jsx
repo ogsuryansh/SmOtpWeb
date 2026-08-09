@@ -5,6 +5,8 @@ import { Settings, Save, Loader, Eye, EyeOff, ShieldAlert, Check } from 'lucide-
 const AdminSettings = () => {
   const [settings, setSettings] = useState({
     siteName: '',
+    otpApiKey: '',
+    otpProviderUrl: 'https://api.247otp.com/stubs/handler_api.php',
     sastaOtpApiKey: '',
     markupPercentage: '',
     minDeposit: '',
@@ -168,17 +170,20 @@ const AdminSettings = () => {
                 </div>
 
                 <div className="form-group" style={{ gridColumn: 'span 2' }}>
-                  <label className="form-label" htmlFor="sastaOtpApiKey">SastaOTP API Token Key</label>
+                  <label className="form-label" htmlFor="otpApiKey">OTP Service Provider API Key (247OTP / SastaOTP)</label>
                   <div style={{ position: 'relative' }}>
                     <input
                       type={showApiKey ? 'text' : 'password'}
-                      id="sastaOtpApiKey"
-                      name="sastaOtpApiKey"
+                      id="otpApiKey"
+                      name="otpApiKey"
                       className="form-control"
                       style={{ paddingRight: '2.5rem' }}
-                      value={settings.sastaOtpApiKey}
-                      onChange={handleChange}
-                      placeholder="e.g. your_sasta_api_key_or_mock"
+                      value={settings.otpApiKey || settings.sastaOtpApiKey || ''}
+                      onChange={(e) => {
+                        const val = e.target.value;
+                        setSettings(prev => ({ ...prev, otpApiKey: val, sastaOtpApiKey: val }));
+                      }}
+                      placeholder="Enter 247OTP.com API Token Key (or type 'mock' for test mode)"
                     />
                     <button
                       type="button"
@@ -186,6 +191,37 @@ const AdminSettings = () => {
                       style={{ position: 'absolute', right: '10px', top: '10px', background: 'none', border: 'none', cursor: 'pointer', color: 'var(--text-secondary)' }}
                     >
                       {showApiKey ? <EyeOff size={16} /> : <Eye size={16} />}
+                    </button>
+                  </div>
+                </div>
+
+                <div className="form-group" style={{ gridColumn: 'span 2' }}>
+                  <label className="form-label" htmlFor="otpProviderUrl">OTP Provider Endpoint URL</label>
+                  <input
+                    type="text"
+                    id="otpProviderUrl"
+                    name="otpProviderUrl"
+                    className="form-control"
+                    placeholder="https://api.247otp.com/stubs/handler_api.php"
+                    value={settings.otpProviderUrl || 'https://api.247otp.com/stubs/handler_api.php'}
+                    onChange={handleChange}
+                  />
+                  <div style={{ display: 'flex', gap: '0.5rem', marginTop: '0.5rem' }}>
+                    <button
+                      type="button"
+                      className="btn btn-secondary btn-sm"
+                      onClick={() => setSettings(prev => ({ ...prev, otpProviderUrl: 'https://api.247otp.com/stubs/handler_api.php' }))}
+                      style={{ fontSize: '0.75rem', padding: '0.25rem 0.5rem' }}
+                    >
+                      ⚡ Use 247OTP.com Endpoint
+                    </button>
+                    <button
+                      type="button"
+                      className="btn btn-secondary btn-sm"
+                      onClick={() => setSettings(prev => ({ ...prev, otpProviderUrl: 'https://sastaotp.com/stubs/handler_api.php' }))}
+                      style={{ fontSize: '0.75rem', padding: '0.25rem 0.5rem' }}
+                    >
+                      Use SastaOTP.com Endpoint
                     </button>
                   </div>
                 </div>

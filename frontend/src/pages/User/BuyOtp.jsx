@@ -325,11 +325,7 @@ const BuyOtp = () => {
       };
     });
 
-    // TEST OPTION: Add 'Any' country to bypass SastaOTP's country-specific WRONG_MAX_PRICE errors
-    return [
-      { value: 'any', label: 'Global Server (Any Country)', subLabel: 'Recommended', icon: '🌍', qty: 999, price: mappedCountries[0]?.price || 15 },
-      ...mappedCountries
-    ];
+    return mappedCountries;
   }, [rawServices, selectedService]);
 
   // Sort countryOptions based on sortBy state
