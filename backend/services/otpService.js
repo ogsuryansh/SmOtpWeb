@@ -207,7 +207,7 @@ export const otpService = {
         const res = await fetchApi(`${baseUrl}?api_key=${apiKey}&action=getServicesList&format=json`);
         const data = await res.json();
         
-        if (data.status === 'OK' && data.services) {
+        if (data.services) {
           const formatted = {};
           for (const key in data.services) {
             const svc = data.services[key];
