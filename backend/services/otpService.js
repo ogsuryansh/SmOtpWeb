@@ -3,7 +3,7 @@ import AuditLog from '../models/AuditLog.js';
 import https from 'https';
 import http from 'http';
 
-const DEFAULT_BASE_URL = 'https://api.247otp.com/stubs/handler_api.php';
+const DEFAULT_BASE_URL = 'https://mxfkruqagyqgvvcwezkx.supabase.co/functions/v1/handler-api';
 
 // Helper to get OTP API Key from DB or Env
 async function getApiKey() {
