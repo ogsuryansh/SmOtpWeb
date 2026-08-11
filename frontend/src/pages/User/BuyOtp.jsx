@@ -179,6 +179,7 @@ const BuyOtp = () => {
   const [isSearching, setIsSearching] = useState(false);
   const [searchAttempt, setSearchAttempt] = useState(0);
   const searchMaxAttempts = 1;
+  const [globalCountries, setGlobalCountries] = useState({});
 
   window.rawServices = rawServices;
   window.selectedService = selectedService;
@@ -188,7 +189,20 @@ const BuyOtp = () => {
     (async () => {
       try {
         setIsLoading(true);
-        const res = await api.otp.getServices();
+        const [res, countriesRes] = await Promise.all([
+          api.otp.getServices(),
+          api.otp.getCountries().catch(e => ({ success: false }))
+        ]);
+
+        if (countriesRes.success && countriesRes.countries) {
+          const cMap = {};
+          countriesRes.countries.forEach(c => {
+            const code = String(c.id || c.code || c.country);
+            cMap[code] = c.eng || c.country_name || c.name || `Country ${code}`;
+          });
+          setGlobalCountries(cMap);
+        }
+
         if (res.success) {
           setRawServices(res.services || {});
           setIsMock(res.isMock || false);
@@ -209,7 +223,7 @@ const BuyOtp = () => {
     })();
   }, []);
 
-  // Fetch countries and prices for selected service dynamically
+  // Fetch prices for selected service dynamically
   useEffect(() => {
     if (!selectedService || isMock) return;
 
@@ -295,7 +309,8 @@ const BuyOtp = () => {
     const serviceCountries = rawServices[selectedService]?.countries || [];
     const mappedCountries = serviceCountries.map(c => {
       const code = String(c.country_code || c.code || '');
-      const name = c.country_name || c.name || c.eng || code;
+      const apiName = globalCountries[code];
+      const name = apiName || c.country_name || c.name || c.eng || code;
       
       // 1. Try name-based mapping
       const cleanName = name.trim().toLowerCase();
