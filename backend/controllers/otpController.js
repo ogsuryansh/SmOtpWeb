@@ -12,6 +12,12 @@ async function getMarkupPercentage() {
   return setting ? parseFloat(setting.value) : 20; // Default 20%
 }
 
+// Helper to get price multiplier (converts API native currency to INR selling price)
+async function getApiPriceMultiplier() {
+  const setting = await Setting.findOne({ key: 'apiPriceMultiplier' });
+  return setting ? parseFloat(setting.value) : 96; // 1 API unit = ~₹95.37 (matches 247otp.com INR pricing)
+}
+
 // @desc    Get services list with local markup applied
 // @route   GET /api/otp/services
 // @access  Private
@@ -19,6 +25,7 @@ export const getServices = async (req, res, next) => {
   try {
     const { service } = req.query;
     const markup = await getMarkupPercentage();
+    const priceMultiplier = await getApiPriceMultiplier();
     
     const apiData = await sastaOtpService.getServicesList(service);
 
@@ -27,18 +34,18 @@ export const getServices = async (req, res, next) => {
       throw new Error(apiData.message || 'Failed to fetch services from provider');
     }
 
-    // Apply markup to services (DEEP CLONE to avoid mutating cache)
+    // Apply multiplier (currency conversion) + markup to services (DEEP CLONE to avoid mutating cache)
     const services = JSON.parse(JSON.stringify(apiData.services));
     for (const key in services) {
       const srv = services[key];
-      // Apply to main price
-      srv.price = parseFloat((srv.price * (1 + markup / 100)).toFixed(2));
+      // Apply multiplier then markup to main price
+      srv.price = parseFloat((srv.price * priceMultiplier * (1 + markup / 100)).toFixed(2));
       
       // Apply to individual country prices
       if (srv.countries && Array.isArray(srv.countries)) {
         srv.countries = srv.countries.map(country => ({
           ...country,
-          price: parseFloat((country.price * (1 + markup / 100)).toFixed(2))
+          price: parseFloat((country.price * priceMultiplier * (1 + markup / 100)).toFixed(2))
         }));
       }
     }
@@ -108,7 +115,8 @@ export const buyNumber = async (req, res, next) => {
 
     const apiPrice = countryConfig.price;
     const markup = await getMarkupPercentage();
-    let finalPrice = parseFloat((apiPrice * (1 + markup / 100)).toFixed(2));
+    const priceMultiplier = await getApiPriceMultiplier();
+    let finalPrice = parseFloat((apiPrice * priceMultiplier * (1 + markup / 100)).toFixed(2));
 
     if (multiSms) {
       const multiplierSetting = await Setting.findOne({ key: 'multiSmsMultiplier' });

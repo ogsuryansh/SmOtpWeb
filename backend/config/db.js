@@ -28,6 +28,7 @@ const seedSettings = async () => {
     { key: 'paymentUpiId', value: 'pay@upi' },
     { key: 'markupPercentage', value: 20 },
     { key: 'multiSmsMultiplier', value: 2 },
+    { key: 'apiPriceMultiplier', value: 96 }, // Converts API cost units to INR (matches 247otp.com rates: 1 unit = ~Rs.95.37)
   ];
 
   for (const item of defaultSettings) {

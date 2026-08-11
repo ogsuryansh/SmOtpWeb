@@ -9,6 +9,7 @@ const AdminSettings = () => {
     otpProviderUrl: 'https://mxfkruqagyqgvvcwezkx.supabase.co/functions/v1/handler-api',
     sastaOtpApiKey: '',
     markupPercentage: '',
+    apiPriceMultiplier: '12',
     minDeposit: '',
     paymentUpiId: '',
     paymentQrCode: '',
@@ -137,6 +138,21 @@ const AdminSettings = () => {
                     placeholder="e.g. 20"
                     value={settings.markupPercentage}
                     onChange={handleChange}
+                    required
+                  />
+                </div>
+
+                <div className="form-group">
+                  <label className="form-label" htmlFor="apiPriceMultiplier">API Price Multiplier (Currency → ₹)</label>
+                  <input
+                    type="number"
+                    id="apiPriceMultiplier"
+                    name="apiPriceMultiplier"
+                    className="form-control"
+                    placeholder="e.g. 12"
+                    value={settings.apiPriceMultiplier}
+                    onChange={handleChange}
+                    step="0.1"
                     required
                   />
                 </div>
@@ -320,6 +336,9 @@ const AdminSettings = () => {
             </p>
             <p className="text-secondary" style={{ fontSize: '0.85rem', borderTop: '1px solid var(--border-color)', paddingTop: '1rem', lineHeight: '1.4' }}>
               <b>Markup Margin:</b> Markup values dynamically modify final prices on the buying screen. (e.g. A markup of 20% increases a ₹10 original wholesale country price to a ₹12 purchase cost).
+            </p>
+            <p className="text-secondary" style={{ fontSize: '0.85rem', borderTop: '1px solid var(--border-color)', paddingTop: '1rem', lineHeight: '1.4' }}>
+              <b>Price Multiplier:</b> The API returns prices in its native currency (rubles). Multiply by this factor to convert to your INR selling price. Default <code>12</code> means ₽0.8 (Telegram India) → ₹9.6 (before markup).
             </p>
           </div>
 

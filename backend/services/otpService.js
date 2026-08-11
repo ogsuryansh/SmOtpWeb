@@ -243,61 +243,64 @@ export const otpService = {
     const baseUrl = await getBaseUrl();
 
     try {
-      const pricesUrl = `${baseUrl}?api_key=${apiKey}&action=getPricesV3&service=${serviceCode}&format=json`;
-      const pricesRes = await fetchApi(pricesUrl);
-      const pricesData = await pricesRes.json();
+      // Fetch prices and countries list in parallel
+      // getPrices returns: { countryId: { serviceCode: { cost, count } } }
+      const [pricesRes, countriesRes] = await Promise.all([
+        fetchApi(`${baseUrl}?api_key=${apiKey}&action=getPrices&service=${serviceCode}&format=json`),
+        fetchApi(`${baseUrl}?api_key=${apiKey}&action=getCountries&format=json`),
+      ]);
 
-      if (pricesData.success === false || pricesData.error) {
-        throw new Error(pricesData.message || pricesData.error || 'Provider API error');
+      const pricesData = await pricesRes.json();
+      const countriesData = await countriesRes.json();
+
+      // Build a map of countryId -> countryName from getCountries
+      const countryNameMap = {};
+      if (countriesData.countries && Array.isArray(countriesData.countries)) {
+        countriesData.countries.forEach(c => {
+          countryNameMap[String(c.id)] = c.eng || `Country ${c.id}`;
+        });
       }
 
       const services = {};
       const code = serviceCode;
-      
+
       services[code] = {
         code: code,
         name: SERVICE_NAMES[code] || code.toUpperCase(),
         price: 0,
-        countries: []
+        countries: [],
+        multi_sms: false,
       };
 
-      if (pricesData.countries && Array.isArray(pricesData.countries)) {
-        for (const item of pricesData.countries) {
-          if (item.qty > 0) {
-            let countryCodeVal = item.country_code || String(item.country);
-            let countryName = item.country_name || `Country ${countryCodeVal}`;
-            let countryFlag = item.flag || '🌐';
+      // pricesData is keyed by country numeric ID
+      // e.g. { "22": { "tg": { "cost": 0.8, "count": 236551 } }, ... }
+      for (const countryId in pricesData) {
+        const entry = pricesData[countryId][code];
+        if (!entry) continue;
+        const qty = entry.count || 0;
+        if (qty <= 0) continue;
+        const price = entry.cost || 0;
+        const countryName = countryNameMap[countryId] || `Country ${countryId}`;
 
-            if (countryCodeVal === '*') {
-              countryName = 'Any Country';
-              countryCodeVal = '*';
-              countryFlag = '🌐';
-            }
-
-            if (!services[code].countries.find(c => c.country_code === countryCodeVal)) {
-               services[code].countries.push({
-                 country_code: countryCodeVal,
-                 country_name: countryName,
-                 flag: countryFlag,
-                 price: item.price,
-                 qty: item.qty
-               });
-            }
-          }
-        }
+        services[code].countries.push({
+          country_code: countryId,
+          country_name: countryName,
+          flag: '🌐',
+          price: price,
+          qty: qty,
+        });
       }
 
       if (services[code].countries.length > 0) {
         services[code].price = Math.min(...services[code].countries.map(c => c.price));
       }
 
-      for (const cCode in services) {
-        services[cCode].countries.sort((a, b) => {
-          if (a.country_code === '22' || a.country_code === '91') return -1;
-          if (b.country_code === '22' || b.country_code === '91') return 1;
-          return a.country_name.localeCompare(b.country_name);
-        });
-      }
+      // Sort: India (22) first, then alphabetical
+      services[code].countries.sort((a, b) => {
+        if (a.country_code === '22') return -1;
+        if (b.country_code === '22') return 1;
+        return a.country_name.localeCompare(b.country_name);
+      });
 
       return { status: 'OK', services, isMock: false };
     } catch (err) {
@@ -406,7 +409,7 @@ export const otpService = {
     const baseUrl = await getBaseUrl();
 
     try {
-      let url = `${baseUrl}?api_key=${apiKey}&action=getNumberV2&service=${serviceCode}&country=${countryCode}&format=json`;
+      let url = `${baseUrl}?api_key=${apiKey}&action=getNumber&service=${serviceCode}&country=${countryCode}&format=json`;
       if (maxPrice) url += `&maxPrice=${maxPrice}`;
       if (multiSms) url += `&multiSMS=1`;
 
@@ -523,7 +526,7 @@ export const otpService = {
     const baseUrl = await getBaseUrl();
 
     try {
-      const url = `${baseUrl}?api_key=${apiKey}&action=getStatusV2&id=${activationId}`;
+      const url = `${baseUrl}?api_key=${apiKey}&action=getStatus&id=${activationId}`;
       const res = await fetchApi(url);
       const text = await res.text();
 
